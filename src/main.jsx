@@ -485,12 +485,28 @@ function LoginPage({ role }) {
 }
 
 function Field({ label, value, onChange, type = "text", placeholder, icon, required = true }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+
   return (
     <label className="flex flex-col gap-xs">
       <span className="text-label-bold font-label-bold text-on-surface">{label}</span>
       <span className="relative flex items-center">
         {icon && <Icon className="absolute left-md text-[18px] text-outline">{icon}</Icon>}
-        <input required={required} type={type} value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={`${icon ? "pl-2xl" : "pl-md"} w-full rounded-lg border border-outline-variant bg-surface px-md py-[10px] text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} />
+        <input required={required} type={isPassword && showPassword ? "text" : type} value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={`${icon ? "pl-2xl" : "pl-md"} ${isPassword ? "pr-12" : "pr-md"} w-full rounded-lg border border-outline-variant bg-surface px-md py-[10px] text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`} />
+        {isPassword && (
+          <button
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-md rounded-md p-1 text-outline transition-colors hover:bg-surface-container-low hover:text-primary"
+            onClick={(event) => {
+              event.preventDefault();
+              setShowPassword((current) => !current);
+            }}
+            type="button"
+          >
+            <Icon className="text-[20px]">{showPassword ? "visibility_off" : "visibility"}</Icon>
+          </button>
+        )}
       </span>
     </label>
   );
