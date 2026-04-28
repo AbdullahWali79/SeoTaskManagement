@@ -937,13 +937,19 @@ function Guard({ role, children }) {
   return children;
 }
 
-function Card({ title, value, meta, icon, accent = "text-on-surface" }) {
-  return <div className="flex h-32 flex-col justify-between rounded-xl border border-outline-variant bg-surface p-md shadow-level-1"><p className="text-label-bold font-label-bold uppercase text-on-surface-variant">{title}</p><p className={`text-h1 font-h1 ${accent}`}>{value}</p><div className="flex items-center text-body-sm text-outline">{icon && <Icon className="mr-1 text-[16px]">{icon}</Icon>}{meta}</div></div>;
+function Card({ title, value, meta, icon, accent = "text-on-surface", onClick }) {
+  const content = <><p className="text-label-bold font-label-bold uppercase text-on-surface-variant">{title}</p><p className={`text-h1 font-h1 ${accent}`}>{value}</p><div className="flex items-center justify-between gap-sm text-body-sm text-outline"><span className="flex items-center">{icon && <Icon className="mr-1 text-[16px]">{icon}</Icon>}{meta}</span>{onClick && <Icon className="text-[18px] text-primary">arrow_forward</Icon>}</div></>;
+  if (onClick) return <button className="flex h-32 w-full flex-col justify-between rounded-xl border border-outline-variant bg-surface p-md text-left shadow-level-1 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-level-2" onClick={onClick} type="button">{content}</button>;
+  return <div className="flex h-32 flex-col justify-between rounded-xl border border-outline-variant bg-surface p-md shadow-level-1">{content}</div>;
 }
 
 function AdminDashboard() {
   const { profiles, tasks, ratings, submissions, loading } = useData();
   const employees = profiles.filter((p) => p.role === "employee");
+  const pendingEmployees = employees.filter((p) => p.status === "pending").length;
+  const pendingReviews = submissions.filter((submission) => String(submission.status).toLowerCase() === "submitted").length
+    + tasks.filter((task) => task.final_forwarded_to_admin && String(task.status).toLowerCase() === "submitted").length;
+  const pendingPayments = tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase()) && task.payment_status !== "released").length;
   const inboxCount = profiles.filter((p) => ["employee", "manager"].includes(p.role) && p.status === "pending").length
     + tasks.filter((task) => task.final_forwarded_to_admin && task.status === "submitted").length
     + submissions.filter((submission) => String(submission.status).toLowerCase() === "submitted").length
@@ -955,10 +961,10 @@ function AdminDashboard() {
       <div className="mx-auto max-w-7xl space-y-lg">
         <div className="grid grid-cols-1 gap-md md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <Card title="Total Employees" value={employees.length} meta="+ active team" icon="trending_up" />
-          <Card title="Pending Approvals" value={employees.filter((p) => p.status === "pending").length} meta="Action needed" icon="pending_actions" />
-          <Card title="Total Tasks" value={tasks.length} meta="Across all projects" icon="assignment" />
+          <Card title="Pending Employees" value={pendingEmployees} meta="Open approvals" icon="person_add" accent="text-[#FFAB00]" onClick={() => navigate("/admin/inbox")} />
+          <Card title="Pending Reviews" value={pendingReviews} meta="Review submissions" icon="rate_review" accent="text-primary" onClick={() => navigate("/admin/submissions")} />
+          <Card title="Pending Payments" value={pendingPayments} meta="Open payment queue" icon="payments" accent="text-[#FFAB00]" onClick={() => navigate("/admin/payments")} />
           <Card title="Completed Tasks" value={tasks.filter((t) => ["done", "approved"].includes(t.status)).length} meta="Approved or done" accent="text-[#36B37E]" />
-          <Card title="In Progress" value={tasks.filter((t) => t.status === "in progress").length} meta="Currently active" accent="text-[#0052CC]" />
           <Card title="Average Rating" value={avgRating} meta="Quality score" icon="star" />
         </div>
         <button className="flex w-full items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-lg text-left shadow-level-1 transition hover:bg-primary/10" onClick={() => navigate("/admin/inbox")} type="button">
