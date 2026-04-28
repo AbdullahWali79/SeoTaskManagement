@@ -1373,7 +1373,7 @@ function SettingsPage({ role }) {
   const data = useData();
   const notify = useToast();
   const [ownPassword, setOwnPassword] = useState("");
-  const [adminPasswordForm, setAdminPasswordForm] = useState({ user_id: "", password: "" });
+  const [resetEmail, setResetEmail] = useState("");
   const people = data.profiles.filter((item) => ["employee", "manager"].includes(item.role));
 
   const changeOwnPassword = async (event) => {
@@ -1390,22 +1390,18 @@ function SettingsPage({ role }) {
     }
   };
 
-  const changeEmployeePassword = async (event) => {
+  const sendPasswordReset = async (event) => {
     event.preventDefault();
     try {
-      if (!adminPasswordForm.user_id) throw new Error("Select an employee or manager.");
-      if (adminPasswordForm.password.length < 6) throw new Error("Password must be at least 6 characters.");
-      const { error } = await supabase.functions.invoke("admin-set-password", {
-        body: {
-          user_id: adminPasswordForm.user_id,
-          password: adminPasswordForm.password
-        }
+      if (!resetEmail) throw new Error("Select an employee or manager.");
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/employee/login`
       });
       if (error) throw error;
-      setAdminPasswordForm({ user_id: "", password: "" });
-      notify("Employee password has been changed.");
+      setResetEmail("");
+      notify("Password reset link sent to employee email.");
     } catch (error) {
-      notify(`${error.message}. Deploy the admin-set-password Edge Function if this is the first time.`, "error");
+      notify(error.message, "error");
     }
   };
 
@@ -1425,19 +1421,18 @@ function SettingsPage({ role }) {
           </div>
         </form>
         {role === "admin" && (
-          <form className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={changeEmployeePassword}>
-            <h2 className="mb-sm text-h3 font-h3">Change Employee / Manager Password</h2>
-            <p className="mb-md text-body-md text-on-surface-variant">This uses a secure Supabase Edge Function with the service role key. The service role key must never be exposed in the browser.</p>
-            <div className="grid grid-cols-1 gap-md md:grid-cols-3">
+          <form className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={sendPasswordReset}>
+            <h2 className="mb-sm text-h3 font-h3">Send Employee / Manager Password Reset</h2>
+            <p className="mb-md text-body-md text-on-surface-variant">This sends a secure reset link to the selected employee/manager email. No Edge Function or service role key is required.</p>
+            <div className="grid grid-cols-1 gap-md md:grid-cols-[1fr_auto]">
               <label className="flex flex-col gap-xs">
                 <span className="text-label-bold font-label-bold text-on-surface">Employee / Manager</span>
-                <select className="w-full rounded-lg border border-outline-variant bg-surface px-md py-[10px] text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={adminPasswordForm.user_id} onChange={(event) => setAdminPasswordForm({ ...adminPasswordForm, user_id: event.target.value })}>
+                <select className="w-full rounded-lg border border-outline-variant bg-surface px-md py-[10px] text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)}>
                   <option value="">Select person</option>
-                  {people.map((person) => <option key={person.id} value={person.id}>{person.full_name || person.email} ({person.role})</option>)}
+                  {people.map((person) => <option key={person.id} value={person.email}>{person.full_name || person.email} ({person.role}) - {person.email}</option>)}
                 </select>
               </label>
-              <Field label="New Password" type="password" value={adminPasswordForm.password} onChange={(password) => setAdminPasswordForm({ ...adminPasswordForm, password })} placeholder="Enter new password" />
-              <button className="self-end rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-white" type="submit">Set Password</button>
+              <button className="self-end rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-white" type="submit">Send Reset Link</button>
             </div>
           </form>
         )}
