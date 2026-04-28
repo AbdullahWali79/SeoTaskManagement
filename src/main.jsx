@@ -520,6 +520,73 @@ function StudentSearchField({ students, value, onChange }) {
   );
 }
 
+function ProjectSearchField({ projects, value, onChange }) {
+  const selected = projects.find((project) => project.id === value);
+  const [query, setQuery] = useState(selected?.project_name || "");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const nextSelected = projects.find((project) => project.id === value);
+    setQuery(nextSelected?.project_name || "");
+  }, [value, projects]);
+
+  const filteredProjects = projects
+    .filter((project) => {
+      const search = `${project.project_name || ""} ${project.website_url || ""} ${project.category || ""}`.toLowerCase();
+      return search.includes(query.toLowerCase());
+    })
+    .slice(0, 8);
+
+  return (
+    <label className="relative flex flex-col gap-xs">
+      <span className="text-label-bold font-label-bold text-on-surface">Project</span>
+      <span className="relative flex items-center">
+        <Icon className="absolute left-md text-[18px] text-outline">travel_explore</Icon>
+        <input
+          className="w-full rounded-lg border border-outline-variant bg-surface px-md py-[10px] pl-2xl text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setOpen(true);
+            if (!event.target.value) onChange("");
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Type project name, website, or category..."
+          required
+          value={query}
+        />
+      </span>
+      {open && (
+        <div className="absolute left-0 right-0 top-[68px] z-50 max-h-64 overflow-y-auto rounded-lg border border-outline-variant bg-white shadow-level-2">
+          {filteredProjects.length ? (
+            filteredProjects.map((project) => (
+              <button
+                className="flex w-full items-center justify-between gap-3 px-md py-3 text-left hover:bg-surface-container-low"
+                key={project.id}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  setQuery(project.project_name || project.website_url);
+                  onChange(project.id);
+                  setOpen(false);
+                }}
+                type="button"
+              >
+                <span>
+                  <span className="block font-semibold text-on-surface">{project.project_name || "Unnamed Project"}</span>
+                  <span className="block break-all text-body-sm text-on-surface-variant">{project.website_url || project.category || "No website URL"}</span>
+                </span>
+                <ProjectTag project={project} />
+              </button>
+            ))
+          ) : (
+            <div className="px-md py-3 text-body-sm text-on-surface-variant">No projects found.</div>
+          )}
+        </div>
+      )}
+    </label>
+  );
+}
+
 function SignupPage() {
   const notify = useToast();
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", skill_level: "", message: "", password: "" });
@@ -714,7 +781,7 @@ function TaskForm({ initial = {}, onSave }) {
   const { profiles, projects } = useData();
   const students = profiles.filter((p) => p.role === "student" && p.status === "approved");
   const [form, setForm] = useState({ priority: "Medium", status: "pending", ...initial });
-  return <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={(e) => { e.preventDefault(); onSave({ ...form, created_at: form.created_at || new Date().toISOString() }); setForm({ priority: "Medium", status: "pending" }); }}><Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} /><SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} /><StudentSearchField students={students} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} /><SelectField label="Project" value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} options={projects.map((p) => p.id)} /><Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} /><Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} /><Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} /><Field label="Deadline" type="datetime-local" value={form.deadline?.slice(0, 16)} onChange={(deadline) => setForm({ ...form, deadline: new Date(deadline).toISOString() })} /><SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} /><SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} /><label className="md:col-span-2 flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Instructions</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={form.instructions || ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })} /></label><button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Task</button></form>;
+  return <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={(e) => { e.preventDefault(); onSave({ ...form, created_at: form.created_at || new Date().toISOString() }); setForm({ priority: "Medium", status: "pending" }); }}><Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} /><SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} /><StudentSearchField students={students} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} /><ProjectSearchField projects={projects} value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} /><Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} /><Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} /><Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} /><Field label="Deadline" type="datetime-local" value={form.deadline?.slice(0, 16)} onChange={(deadline) => setForm({ ...form, deadline: new Date(deadline).toISOString() })} /><SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} /><SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} /><label className="md:col-span-2 flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Instructions</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={form.instructions || ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })} /></label><button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Task</button></form>;
 }
 
 function TasksPage() {
