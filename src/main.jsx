@@ -422,7 +422,7 @@ function PublicLanding() {
       <footer className="border-t border-outline-variant/10 bg-inverse-surface px-lg py-2xl text-inverse-on-surface">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-xl md:flex-row">
           <div><div className="mb-lg flex items-center gap-sm"><Icon className="text-inverse-primary">task_alt</Icon><span className="text-h3 font-h3 text-white">SEO TaskFlow</span></div><p className="max-w-sm text-body-md text-inverse-on-surface/70">Systematic SEO task management for high-performance agencies and educational cohorts.</p></div>
-          <p className="text-body-sm text-inverse-on-surface/50">© 2026 SEO TaskFlow. All rights reserved.</p>
+          <p className="text-body-sm text-inverse-on-surface/50">© 2026 SEO TaskFlow. All rights reserved. Developed by <a className="font-semibold text-inverse-primary underline-offset-4 hover:underline" href="https://muhammadabdullahwali.vercel.app/" target="_blank" rel="noreferrer">Muhammad Abdullah</a></p>
         </div>
       </footer>
     </main>
