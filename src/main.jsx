@@ -883,6 +883,7 @@ function Shell({ role, title, children }) {
     ["/admin/tasks", "assignment", "Task Management"],
     ["/admin/submissions", "send_and_archive", "Submissions"],
     ["/admin/payments", "payments", "Payments"],
+    ["/admin/managers", "supervisor_account", "Manager Performance"],
     ["/admin/projects", "language", "Projects/Websites"],
     ["/admin/reports", "analytics", "Reports"],
     ["/admin/settings", "settings", "Settings"]
@@ -1495,6 +1496,52 @@ function PaymentsPage() {
   );
 }
 
+function ManagerPerformancePage() {
+  const data = useData();
+  const managers = data.profiles.filter((profile) => profile.role === "manager");
+  const rows = managers.map((manager) => {
+    const managerTasks = data.tasks.filter((task) => task.manager_id === manager.id || task.assigned_by === manager.id);
+    const forwarded = managerTasks.filter((task) => task.final_forwarded_to_admin).length;
+    const rejectedByAdmin = managerTasks.filter((task) => String(task.status).toLowerCase() === "rejected" && task.admin_reviewed_at).length;
+    const avgProgress = managerTasks.length ? Math.round(managerTasks.reduce((sum, task) => sum + getLatestTaskProgress(task, data.progressUpdates), 0) / managerTasks.length) : 0;
+    const reviewedTasks = managerTasks.filter((task) => task.manager_reviewed_at);
+    const reviewHours = reviewedTasks.map((task) => {
+      const submission = data.submissions.find((item) => item.task_id === task.id);
+      const start = submission?.submitted_at || task.created_at;
+      return start ? (new Date(task.manager_reviewed_at) - new Date(start)) / 3600000 : 0;
+    }).filter((hours) => Number.isFinite(hours) && hours >= 0);
+    const avgReviewSpeed = reviewHours.length ? reviewHours.reduce((sum, hours) => sum + hours, 0) / reviewHours.length : 0;
+    const activeEmployees = new Set(managerTasks.map((task) => task.student_id).filter(Boolean)).size;
+    return { manager, managerTasks, assigned: managerTasks.length, forwarded, rejectedByAdmin, avgProgress, avgReviewSpeed, activeEmployees };
+  });
+  const totalAssigned = rows.reduce((sum, row) => sum + row.assigned, 0);
+  const totalForwarded = rows.reduce((sum, row) => sum + row.forwarded, 0);
+  const totalRejected = rows.reduce((sum, row) => sum + row.rejectedByAdmin, 0);
+  const overallProgress = rows.length ? Math.round(rows.reduce((sum, row) => sum + row.avgProgress, 0) / rows.length) : 0;
+  return (
+    <Shell role="admin" title="Manager Performance">
+      <div className="mx-auto max-w-7xl space-y-lg">
+        <div className="grid grid-cols-1 gap-md md:grid-cols-5">
+          <Card title="Managers" value={managers.length} meta="Approved team leads" icon="supervisor_account" />
+          <Card title="Assigned Tasks" value={totalAssigned} meta="Under managers" icon="assignment" />
+          <Card title="Forwarded Tasks" value={totalForwarded} meta="Sent to admin" icon="forward_to_inbox" accent="text-primary" />
+          <Card title="Rejected by Admin" value={totalRejected} meta="Quality misses" icon="cancel" accent="text-error" />
+          <Card title="Avg Progress" value={`${overallProgress}%`} meta="Across managers" icon="trending_up" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1">
+          <div className="overflow-x-auto">
+            <table className="sheet-table">
+              <thead><tr><th>Manager</th><th>Contact</th><th>Employees</th><th>Assigned Tasks</th><th>Forwarded</th><th>Rejected by Admin</th><th>Avg Progress</th><th>Review Speed</th><th>Status</th><th className="text-right">Action</th></tr></thead>
+              <tbody>{rows.map((row) => <tr key={row.manager.id}><td><div className="font-semibold">{row.manager.full_name || "Manager"}</div><div className="text-body-sm text-on-surface-variant">ID: {row.manager.id.slice(0, 8)}</div></td><td><div>{row.manager.email}</div><div className="text-body-sm text-on-surface-variant">{row.manager.phone || "-"}</div></td><td>{row.activeEmployees}</td><td>{row.assigned}</td><td>{row.forwarded}</td><td>{row.rejectedByAdmin}</td><td><div className="min-w-[120px]"><div className="mb-1 text-body-sm">{row.avgProgress}%</div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-primary" style={{ width: `${row.avgProgress}%` }} /></div></div></td><td>{row.avgReviewSpeed ? `${row.avgReviewSpeed.toFixed(1)}h avg` : "-"}</td><td><StatusBadge status={row.manager.status === "approved" ? "approved" : row.manager.status} /></td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate("/admin/tasks")} type="button">View Tasks</button></td></tr>)}</tbody>
+            </table>
+          </div>
+          {!rows.length && <div className="p-lg"><EmptyState title="No managers yet" body="Promote an employee to manager to start tracking manager performance." /></div>}
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
 function ManagerDashboard() {
   const { profile } = useAuth();
   const data = useData();
@@ -1658,6 +1705,7 @@ function AppRouter() {
   if (path.startsWith("/admin/tasks/")) return <Guard role="admin"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/submissions") return <Guard role="admin"><SubmissionsPage /></Guard>;
   if (path === "/admin/payments") return <Guard role="admin"><PaymentsPage /></Guard>;
+  if (path === "/admin/managers") return <Guard role="admin"><ManagerPerformancePage /></Guard>;
   if (path === "/admin/projects") return <Guard role="admin"><ProjectsPage /></Guard>;
   if (path.startsWith("/admin/projects/")) return <Guard role="admin"><ProjectDetailPage id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/reports") return <Guard role="admin"><ReportsPage /></Guard>;
