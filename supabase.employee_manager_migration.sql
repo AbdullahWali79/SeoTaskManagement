@@ -25,7 +25,11 @@ alter table public.tasks
   add column if not exists manager_remarks text,
   add column if not exists manager_reviewed_at timestamp,
   add column if not exists admin_remarks text,
-  add column if not exists admin_reviewed_at timestamp;
+  add column if not exists admin_reviewed_at timestamp,
+  add column if not exists revision_notes text,
+  add column if not exists revision_due_at timestamp,
+  add column if not exists revision_requested_by uuid references public.profiles(id) on delete set null,
+  add column if not exists revision_requested_at timestamp;
 
 alter table public.tasks drop constraint if exists tasks_payment_status_check;
 alter table public.tasks
