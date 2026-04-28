@@ -234,6 +234,18 @@ function DataProvider({ children }) {
     setter((items) => items.filter((item) => item.id !== id));
   };
 
+  const updateProfile = async (id, patch) => {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.from("profiles").update(patch).eq("id", id).select().single();
+      if (error) throw error;
+      setProfiles((items) => items.map((item) => (item.id === id ? data : item)));
+      return data;
+    }
+    const nextProfile = { ...(profiles.find((item) => item.id === id) || {}), ...patch };
+    setProfiles((items) => items.map((item) => (item.id === id ? nextProfile : item)));
+    return nextProfile;
+  };
+
   const updateStatus = async (table, id, status) => {
     const setters = { profiles: setProfiles, tasks: setTasks, submissions: setSubmissions };
     if (isSupabaseConfigured) {
@@ -276,6 +288,7 @@ function DataProvider({ children }) {
     refresh,
     saveProject: (row) => upsertRow("projects", row, setProjects),
     saveProfile: (row) => upsertRow("profiles", row, setProfiles),
+    updateProfile,
     saveTask: (row) => upsertRow("tasks", { ...row, updated_at: new Date().toISOString() }, setTasks),
     saveSubmission: (row) => upsertRow("submissions", row, setSubmissions),
     saveRating: (row) => upsertRow("ratings", row, setRatings),
@@ -865,15 +878,26 @@ function StudentsPage() {
   const data = useData();
   const notify = useToast();
   const employees = data.profiles.filter((p) => ["employee", "manager"].includes(p.role));
-  const approve = async (student, status) => { await data.updateStatus("profiles", student.id, status); notify(`${student.full_name} marked ${status}.`); };
+  const approve = async (student, status) => {
+    try {
+      await data.updateStatus("profiles", student.id, status);
+      notify(`${student.full_name} marked ${status}.`);
+    } catch (error) {
+      notify(error.message, "error");
+    }
+  };
   const setRole = async (person, role) => {
-    await data.saveProfile({ ...person, role });
-    notify(`${person.full_name} is now ${role}.`);
+    try {
+      await data.updateProfile(person.id, { role });
+      notify(`${person.full_name} is now ${role}.`);
+    } catch (error) {
+      notify(error.message, "error");
+    }
   };
   return (
     <Shell role="admin" title="Employees">
       <div className="mb-lg flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h1 className="text-h1 font-h1">Employees</h1><p className="mt-1 text-body-md text-on-surface-variant">Manage employees, promote managers, track progress, and review submissions.</p></div><button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-bold font-label-bold text-on-primary shadow-sm"><Icon className="text-[18px]">add</Icon>Add Employee</button></div>
-      <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Employee Name</th><th>Contact Info</th><th>Role</th><th>Status</th><th>Task Progress</th><th>Avg Rating</th><th className="text-right">Actions</th></tr></thead><tbody>{employees.map((student) => { const studentTasks = data.tasks.filter((t) => t.student_id === student.id || t.manager_id === student.id); const done = studentTasks.filter((t) => ["done", "approved"].includes(t.status)).length; const studentRatings = data.ratings.filter((r) => r.student_id === student.id); const avg = studentRatings.length ? (studentRatings.reduce((s, r) => s + Number(r.rating), 0) / studentRatings.length).toFixed(1) : "-"; return <tr key={student.id}><td><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/50 bg-surface-container font-bold text-primary">{student.full_name?.slice(0, 2).toUpperCase()}</div><div><div className="font-semibold">{student.full_name}</div><div className="text-body-sm text-on-surface-variant">ID: {student.id.slice(0, 8)}</div></div></div></td><td><div className="text-body-sm"><div className="flex items-center gap-1.5"><Icon className="text-[14px] text-on-surface-variant">mail</Icon>{student.email}</div><div className="flex items-center gap-1.5 text-on-surface-variant"><Icon className="text-[14px]">phone</Icon>{student.phone || "-"}</div></div></td><td><span className="capitalize">{student.role}</span></td><td><StatusBadge status={student.status === "approved" ? "active" : student.status} /></td><td><div className="max-w-[160px]"><div className="mb-2 flex justify-between text-body-sm"><span className="font-medium">{done} / {studentTasks.length}</span><span className="text-on-surface-variant">{studentTasks.length ? Math.round((done / studentTasks.length) * 100) : 0}%</span></div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-secondary" style={{ width: `${studentTasks.length ? (done / studentTasks.length) * 100 : 0}%` }} /></div></div></td><td><div className="flex items-center gap-1 font-semibold"><Icon className="text-[16px] text-tertiary-container">star</Icon>{avg}</div></td><td className="text-right"><div className="flex justify-end gap-1"><button title="Approve" className="rounded-md p-1.5 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary" onClick={() => approve(student, "approved")}><Icon className="text-[20px]">check_circle</Icon></button><button title="Make Manager" className="rounded-md p-1.5 text-on-surface-variant hover:bg-primary/10 hover:text-primary" onClick={() => setRole(student, student.role === "manager" ? "employee" : "manager")}><Icon className="text-[20px]">supervisor_account</Icon></button><button title="Reject" className="rounded-md p-1.5 text-on-surface-variant hover:bg-error/10 hover:text-error" onClick={() => approve(student, "rejected")}><Icon className="text-[20px]">cancel</Icon></button><button title="Delete" className="rounded-md p-1.5 text-on-surface-variant hover:bg-surface-container" onClick={() => data.deleteProfile(student.id)}><Icon className="text-[20px]">delete</Icon></button></div></td></tr>; })}</tbody></table></div>{!employees.length && <div className="p-lg"><EmptyState title="No employees found" body="Signup requests will appear here for approval." /></div>}</div>
+      <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Employee Name</th><th>Contact Info</th><th>Role</th><th>Status</th><th>Task Progress</th><th>Avg Rating</th><th className="text-right">Actions</th></tr></thead><tbody>{employees.map((student) => { const studentTasks = data.tasks.filter((t) => t.student_id === student.id || t.manager_id === student.id); const done = studentTasks.filter((t) => ["done", "approved"].includes(t.status)).length; const studentRatings = data.ratings.filter((r) => r.student_id === student.id); const avg = studentRatings.length ? (studentRatings.reduce((s, r) => s + Number(r.rating), 0) / studentRatings.length).toFixed(1) : "-"; return <tr key={student.id}><td><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/50 bg-surface-container font-bold text-primary">{student.full_name?.slice(0, 2).toUpperCase()}</div><div><div className="font-semibold">{student.full_name}</div><div className="text-body-sm text-on-surface-variant">ID: {student.id.slice(0, 8)}</div></div></div></td><td><div className="text-body-sm"><div className="flex items-center gap-1.5"><Icon className="text-[14px] text-on-surface-variant">mail</Icon>{student.email}</div><div className="flex items-center gap-1.5 text-on-surface-variant"><Icon className="text-[14px]">phone</Icon>{student.phone || "-"}</div></div></td><td><span className="capitalize">{student.role}</span></td><td><StatusBadge status={student.status === "approved" ? "active" : student.status} /></td><td><div className="max-w-[160px]"><div className="mb-2 flex justify-between text-body-sm"><span className="font-medium">{done} / {studentTasks.length}</span><span className="text-on-surface-variant">{studentTasks.length ? Math.round((done / studentTasks.length) * 100) : 0}%</span></div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-secondary" style={{ width: `${studentTasks.length ? (done / studentTasks.length) * 100 : 0}%` }} /></div></div></td><td><div className="flex items-center gap-1 font-semibold"><Icon className="text-[16px] text-tertiary-container">star</Icon>{avg}</div></td><td className="text-right"><div className="flex justify-end gap-1"><button title="Approve" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary" onClick={() => approve(student, "approved")} type="button"><Icon className="text-[20px]">check_circle</Icon></button><button title={student.role === "manager" ? "Make Employee" : "Make Manager"} className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-primary/10 hover:text-primary" onClick={() => setRole(student, student.role === "manager" ? "employee" : "manager")} type="button"><Icon className="text-[20px]">supervisor_account</Icon></button><button title="Reject" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-error/10 hover:text-error" onClick={() => approve(student, "rejected")} type="button"><Icon className="text-[20px]">cancel</Icon></button><button title="Delete" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-surface-container" onClick={() => data.deleteProfile(student.id)} type="button"><Icon className="text-[20px]">delete</Icon></button></div></td></tr>; })}</tbody></table></div>{!employees.length && <div className="p-lg"><EmptyState title="No employees found" body="Signup requests will appear here for approval." /></div>}</div>
     </Shell>
   );
 }
