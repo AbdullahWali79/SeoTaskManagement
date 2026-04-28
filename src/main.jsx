@@ -319,6 +319,11 @@ function LoadingBar({ show }) {
 }
 
 function PublicLanding() {
+  const { tasks, submissions } = useData();
+  const doneCount = tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase())).length;
+  const reviewCount = submissions.filter((submission) => ["submitted", "revision required"].includes(String(submission.status).toLowerCase())).length;
+  const pendingCount = tasks.filter((task) => ["pending", "in progress"].includes(String(task.status).toLowerCase())).length;
+
   return (
     <main className="bg-background text-on-background">
       <section className="relative overflow-hidden bg-surface-container-lowest px-lg pb-2xl pt-3xl lg:pb-3xl lg:pt-32">
@@ -336,7 +341,7 @@ function PublicLanding() {
               <LinkButton to="/student/signup" className="flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-low px-lg py-3 text-body-md font-body-md text-on-surface transition-colors hover:bg-surface-container">Join as Student</LinkButton>
             </div>
           </div>
-          <HeroDashboardPreview />
+          <HeroDashboardPreview stats={{ done: doneCount, review: reviewCount, pending: pendingCount }} />
         </div>
       </section>
       <section className="bg-surface-container-low px-lg py-3xl">
@@ -372,7 +377,7 @@ function PublicLanding() {
   );
 }
 
-function HeroDashboardPreview() {
+function HeroDashboardPreview({ stats }) {
   return (
     <div className="hero-preview relative min-h-[420px] overflow-hidden rounded-xl border border-outline-variant/30 bg-[#050b0d] p-xl shadow-level-2 lg:min-h-[520px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,rgba(0,82,204,0.16),transparent_28%),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:auto,18px_18px]" />
@@ -409,9 +414,9 @@ function HeroDashboardPreview() {
         </div>
         <div className="mt-2xl grid grid-cols-3 gap-md">
           {[
-            ["98", "Done"],
-            ["10", "In review"],
-            ["30", "Pending"]
+            [stats.done, "Done"],
+            [stats.review, "In review"],
+            [stats.pending, "Pending"]
           ].map(([value, label]) => (
             <div className="rounded-lg border border-white/10 bg-white/[0.04] p-md text-center" key={label}>
               <p className="text-h3 font-h3 text-white">{value}</p>
