@@ -337,7 +337,8 @@ function StatusBadge({ status }) {
     rejected: "bg-[#DE350B]/10 text-[#DE350B] border-[#DE350B]/20",
     "revision required": "bg-[#FFAB00]/10 text-[#974F0C] border-[#FFAB00]/20",
     done: "bg-[#36B37E]/10 text-[#006c47] border-[#36B37E]/20",
-    active: "bg-[#36B37E]/10 text-[#006c47] border-[#36B37E]/20"
+    active: "bg-[#36B37E]/10 text-[#006c47] border-[#36B37E]/20",
+    inactive: "bg-[#7A869A]/10 text-[#5E6C84] border-[#7A869A]/20"
   };
   return <span className={`inline-flex items-center rounded-md border px-2 py-1 text-label-bold font-label-bold capitalize ${map[key] || map.pending}`}><span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current" />{key}</span>;
 }
@@ -877,7 +878,18 @@ function Activity({ submissions, tasks, profiles }) {
 function StudentsPage() {
   const data = useData();
   const notify = useToast();
-  const employees = data.profiles.filter((p) => ["employee", "manager"].includes(p.role));
+  const [filters, setFilters] = useState({ search: "", role: "", status: "" });
+  const employees = data.profiles
+    .filter((p) => ["employee", "manager"].includes(p.role))
+    .filter((p) => {
+      const searchText = `${p.full_name || ""} ${p.email || ""} ${p.phone || ""} ${p.id || ""}`.toLowerCase();
+      const statusValue = p.status === "approved" ? "active" : p.status;
+      return (
+        (!filters.search || searchText.includes(filters.search.toLowerCase())) &&
+        (!filters.role || p.role === filters.role) &&
+        (!filters.status || statusValue === filters.status)
+      );
+    });
   const approve = async (student, status) => {
     try {
       await data.updateStatus("profiles", student.id, status);
@@ -894,10 +906,94 @@ function StudentsPage() {
       notify(error.message, "error");
     }
   };
+  const toggleActive = async (person) => {
+    const nextStatus = person.status === "approved" ? "inactive" : "approved";
+    await approve(person, nextStatus);
+  };
   return (
     <Shell role="admin" title="Employees">
       <div className="mb-lg flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h1 className="text-h1 font-h1">Employees</h1><p className="mt-1 text-body-md text-on-surface-variant">Manage employees, promote managers, track progress, and review submissions.</p></div><button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-bold font-label-bold text-on-primary shadow-sm"><Icon className="text-[18px]">add</Icon>Add Employee</button></div>
-      <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Employee Name</th><th>Contact Info</th><th>Role</th><th>Status</th><th>Task Progress</th><th>Avg Rating</th><th className="text-right">Actions</th></tr></thead><tbody>{employees.map((student) => { const studentTasks = data.tasks.filter((t) => t.student_id === student.id || t.manager_id === student.id); const done = studentTasks.filter((t) => ["done", "approved"].includes(t.status)).length; const studentRatings = data.ratings.filter((r) => r.student_id === student.id); const avg = studentRatings.length ? (studentRatings.reduce((s, r) => s + Number(r.rating), 0) / studentRatings.length).toFixed(1) : "-"; return <tr key={student.id}><td><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/50 bg-surface-container font-bold text-primary">{student.full_name?.slice(0, 2).toUpperCase()}</div><div><div className="font-semibold">{student.full_name}</div><div className="text-body-sm text-on-surface-variant">ID: {student.id.slice(0, 8)}</div></div></div></td><td><div className="text-body-sm"><div className="flex items-center gap-1.5"><Icon className="text-[14px] text-on-surface-variant">mail</Icon>{student.email}</div><div className="flex items-center gap-1.5 text-on-surface-variant"><Icon className="text-[14px]">phone</Icon>{student.phone || "-"}</div></div></td><td><span className="capitalize">{student.role}</span></td><td><StatusBadge status={student.status === "approved" ? "active" : student.status} /></td><td><div className="max-w-[160px]"><div className="mb-2 flex justify-between text-body-sm"><span className="font-medium">{done} / {studentTasks.length}</span><span className="text-on-surface-variant">{studentTasks.length ? Math.round((done / studentTasks.length) * 100) : 0}%</span></div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-secondary" style={{ width: `${studentTasks.length ? (done / studentTasks.length) * 100 : 0}%` }} /></div></div></td><td><div className="flex items-center gap-1 font-semibold"><Icon className="text-[16px] text-tertiary-container">star</Icon>{avg}</div></td><td className="text-right"><div className="flex justify-end gap-1"><button title="Approve" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary" onClick={() => approve(student, "approved")} type="button"><Icon className="text-[20px]">check_circle</Icon></button><button title={student.role === "manager" ? "Make Employee" : "Make Manager"} className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-primary/10 hover:text-primary" onClick={() => setRole(student, student.role === "manager" ? "employee" : "manager")} type="button"><Icon className="text-[20px]">supervisor_account</Icon></button><button title="Reject" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-error/10 hover:text-error" onClick={() => approve(student, "rejected")} type="button"><Icon className="text-[20px]">cancel</Icon></button><button title="Delete" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-surface-container" onClick={() => data.deleteProfile(student.id)} type="button"><Icon className="text-[20px]">delete</Icon></button></div></td></tr>; })}</tbody></table></div>{!employees.length && <div className="p-lg"><EmptyState title="No employees found" body="Signup requests will appear here for approval." /></div>}</div>
+      <div className="mb-md grid grid-cols-1 gap-md rounded-xl border border-outline-variant/50 bg-surface p-md shadow-level-1 md:grid-cols-4">
+        <label className="relative md:col-span-2">
+          <Icon className="absolute left-md top-1/2 -translate-y-1/2 text-[18px] text-outline">search</Icon>
+          <input className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest py-2.5 pl-2xl pr-md text-body-md focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Search employee by name, email, phone, or ID..." value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
+        </label>
+        <select className="rounded-lg border border-outline-variant bg-surface-container-lowest px-md py-2.5 text-body-md focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={filters.role} onChange={(event) => setFilters({ ...filters, role: event.target.value })}>
+          <option value="">All roles</option>
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+        </select>
+        <select className="rounded-lg border border-outline-variant bg-surface-container-lowest px-md py-2.5 text-body-md focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1">
+        <div className="overflow-x-auto">
+          <table className="sheet-table">
+            <thead>
+              <tr>
+                <th>Employee Name</th>
+                <th>Contact Info</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Task Progress</th>
+                <th>Avg Rating</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {employees.map((student) => {
+                const studentTasks = data.tasks.filter((t) => t.student_id === student.id || t.manager_id === student.id);
+                const done = studentTasks.filter((t) => ["done", "approved"].includes(t.status)).length;
+                const studentRatings = data.ratings.filter((r) => r.student_id === student.id);
+                const avg = studentRatings.length ? (studentRatings.reduce((s, r) => s + Number(r.rating), 0) / studentRatings.length).toFixed(1) : "-";
+                return (
+                  <tr key={student.id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/50 bg-surface-container font-bold text-primary">{student.full_name?.slice(0, 2).toUpperCase()}</div>
+                        <div>
+                          <div className="font-semibold">{student.full_name}</div>
+                          <div className="text-body-sm text-on-surface-variant">ID: {student.id.slice(0, 8)}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="text-body-sm">
+                        <div className="flex items-center gap-1.5"><Icon className="text-[14px] text-on-surface-variant">mail</Icon>{student.email}</div>
+                        <div className="flex items-center gap-1.5 text-on-surface-variant"><Icon className="text-[14px]">phone</Icon>{student.phone || "-"}</div>
+                      </div>
+                    </td>
+                    <td><span className="capitalize">{student.role}</span></td>
+                    <td><StatusBadge status={student.status === "approved" ? "active" : student.status} /></td>
+                    <td>
+                      <div className="max-w-[160px]">
+                        <div className="mb-2 flex justify-between text-body-sm"><span className="font-medium">{done} / {studentTasks.length}</span><span className="text-on-surface-variant">{studentTasks.length ? Math.round((done / studentTasks.length) * 100) : 0}%</span></div>
+                        <div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-secondary" style={{ width: `${studentTasks.length ? (done / studentTasks.length) * 100 : 0}%` }} /></div>
+                      </div>
+                    </td>
+                    <td><div className="flex items-center gap-1 font-semibold"><Icon className="text-[16px] text-tertiary-container">star</Icon>{avg}</div></td>
+                    <td className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <button title="Approve" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary" onClick={() => approve(student, "approved")} type="button"><Icon className="text-[20px]">check_circle</Icon></button>
+                        <button title={student.status === "approved" ? "Deactivate" : "Activate"} className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-[#FFAB00]/10 hover:text-[#974F0C]" onClick={() => toggleActive(student)} type="button"><Icon className="text-[20px]">{student.status === "approved" ? "toggle_on" : "toggle_off"}</Icon></button>
+                        <button title={student.role === "manager" ? "Make Employee" : "Make Manager"} className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-primary/10 hover:text-primary" onClick={() => setRole(student, student.role === "manager" ? "employee" : "manager")} type="button"><Icon className="text-[20px]">supervisor_account</Icon></button>
+                        <button title="Reject" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-error/10 hover:text-error" onClick={() => approve(student, "rejected")} type="button"><Icon className="text-[20px]">cancel</Icon></button>
+                        <button title="Delete" className="cursor-pointer rounded-md p-1.5 text-on-surface-variant hover:bg-surface-container" onClick={() => data.deleteProfile(student.id)} type="button"><Icon className="text-[20px]">delete</Icon></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {!employees.length && <div className="p-lg"><EmptyState title="No employees found" body="Try a different search or status filter." /></div>}
+      </div>
     </Shell>
   );
 }

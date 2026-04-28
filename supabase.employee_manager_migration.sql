@@ -11,7 +11,7 @@ where role = 'student';
 
 alter table public.profiles drop constraint if exists profiles_status_check;
 alter table public.profiles
-  add constraint profiles_status_check check (status in ('pending', 'approved', 'rejected'));
+  add constraint profiles_status_check check (status in ('pending', 'approved', 'rejected', 'inactive'));
 
 alter table public.tasks
   add column if not exists assigned_by uuid references public.profiles(id) on delete set null,
