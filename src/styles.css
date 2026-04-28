@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #f9f9ff;
+  color: #091c35;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+.shadow-level-1 {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-level-2 {
+  box-shadow: 0 12px 24px rgba(0, 82, 204, 0.1);
+}
+
+.sheet-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.sheet-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(231, 238, 255, 0.65);
+  border-bottom: 1px solid rgba(195, 198, 214, 0.65);
+}
+
+.sheet-table th {
+  padding: 12px 16px;
+  color: #434654;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sheet-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(195, 198, 214, 0.3);
+  vertical-align: middle;
+}
+
+.sheet-table tbody tr:nth-child(even) {
+  background: rgba(240, 243, 255, 0.35);
+}
+
+.sheet-table tbody tr:hover {
+  background: rgba(240, 243, 255, 0.65);
+}
