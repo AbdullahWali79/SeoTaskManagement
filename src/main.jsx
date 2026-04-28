@@ -308,6 +308,37 @@ function useData() {
   return useContext(DataContext);
 }
 
+function getNotificationSummary(role, profile, data) {
+  if (!data || !profile) return { count: 0, label: "No notifications", path: "/" };
+  if (role === "admin") {
+    const employeeApprovals = data.profiles.filter((person) => ["employee", "manager"].includes(person.role) && person.status === "pending").length;
+    const pendingReviews = data.submissions.filter((submission) => String(submission.status).toLowerCase() === "submitted").length
+      + data.tasks.filter((task) => task.final_forwarded_to_admin && String(task.status).toLowerCase() === "submitted").length;
+    const paymentsPending = data.tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase()) && task.payment_status !== "released").length;
+    const parts = [];
+    if (pendingReviews) parts.push(`${pendingReviews} pending review${pendingReviews === 1 ? "" : "s"}`);
+    if (paymentsPending) parts.push(`${paymentsPending} payment${paymentsPending === 1 ? "" : "s"} pending`);
+    if (employeeApprovals) parts.push(`${employeeApprovals} employee approval${employeeApprovals === 1 ? "" : "s"}`);
+    return { count: pendingReviews + paymentsPending + employeeApprovals, label: parts.length ? parts.join(", ") : "No pending admin actions", path: "/admin/inbox" };
+  }
+  if (role === "manager") {
+    const teamTasks = data.tasks.filter((task) => task.manager_id === profile.id || task.assigned_by === profile.id);
+    const submitted = teamTasks.filter((task) => String(task.status).toLowerCase() === "submitted" && !task.final_forwarded_to_admin).length;
+    const revisions = teamTasks.filter((task) => String(task.status).toLowerCase() === "revision required").length;
+    const parts = [];
+    if (submitted) parts.push(`${submitted} team submission${submitted === 1 ? "" : "s"}`);
+    if (revisions) parts.push(`${revisions} revision item${revisions === 1 ? "" : "s"}`);
+    return { count: submitted + revisions, label: parts.length ? parts.join(", ") : "No pending manager actions", path: "/manager/submissions" };
+  }
+  const myTasks = data.tasks.filter((task) => task.student_id === profile.id);
+  const revisions = myTasks.filter((task) => String(task.status).toLowerCase() === "revision required").length;
+  const pending = myTasks.filter((task) => ["pending", "in progress"].includes(String(task.status).toLowerCase())).length;
+  const parts = [];
+  if (revisions) parts.push(`${revisions} revision required`);
+  if (pending) parts.push(`${pending} active task${pending === 1 ? "" : "s"}`);
+  return { count: revisions + pending, label: parts.length ? parts.join(", ") : "No pending employee actions", path: "/employee/tasks" };
+}
+
 function getLatestTaskProgress(task, progressUpdates) {
   const updates = progressUpdates
     .filter((update) => update.task_id === task.id)
@@ -842,7 +873,9 @@ function SignupPage() {
 
 function Shell({ role, title, children }) {
   const { signOut, profile } = useAuth();
+  const data = useData();
   const path = usePath();
+  const notifications = getNotificationSummary(role, profile, data);
   const nav = role === "admin" ? [
     ["/admin/dashboard", "dashboard", "Dashboard"],
     ["/admin/inbox", "inbox", "Review Inbox"],
@@ -884,7 +917,7 @@ function Shell({ role, title, children }) {
       <main className="flex h-screen flex-1 flex-col overflow-hidden md:ml-64">
         <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
           <div className="flex items-center gap-3"><button className="md:hidden" onClick={() => navigate(role === "admin" ? "/admin/dashboard" : role === "manager" ? "/manager/dashboard" : "/employee/dashboard")}><Icon>menu</Icon></button><h2 className="text-h2 font-h2 text-on-surface">{title}</h2></div>
-          <div className="flex items-center gap-4"><button className="relative rounded-full p-2 text-slate-500 hover:bg-slate-50"><Icon>notifications</Icon><span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-error" /></button><div className="flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant bg-surface-container-high text-sm font-bold">{(profile?.full_name || "U").slice(0, 2).toUpperCase()}</div></div>
+          <div className="flex items-center gap-4"><button className="relative rounded-full p-2 text-slate-500 hover:bg-slate-50" onClick={() => navigate(notifications.path)} title={notifications.label} type="button"><Icon>notifications</Icon>{notifications.count > 0 && <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-error px-1 text-[11px] font-bold leading-none text-white">{notifications.count > 99 ? "99+" : notifications.count}</span>}</button><div className="hidden max-w-[260px] truncate text-body-sm text-on-surface-variant lg:block">{notifications.label}</div><div className="flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant bg-surface-container-high text-sm font-bold">{(profile?.full_name || "U").slice(0, 2).toUpperCase()}</div></div>
         </header>
         <div className="flex-1 overflow-y-auto p-lg">{children}</div>
       </main>
