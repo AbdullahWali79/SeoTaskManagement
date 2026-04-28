@@ -889,6 +889,7 @@ function Shell({ role, title, children }) {
     ["/admin/settings", "settings", "Settings"]
   ] : role === "manager" ? [
     ["/manager/dashboard", "dashboard", "Dashboard"],
+    ["/manager/inbox", "inbox", "Review Inbox"],
     ["/manager/tasks", "assignment", "Team Tasks"],
     ["/manager/submissions", "send_and_archive", "Submissions"],
     ["/manager/settings", "settings", "Settings"]
@@ -1572,6 +1573,55 @@ function ManagerDashboard() {
   return <Shell role="manager" title="Manager Dashboard"><div className="mx-auto max-w-7xl space-y-lg"><div className="grid grid-cols-1 gap-md md:grid-cols-4"><Card title="Team Tasks" value={teamTasks.length} meta="Assigned or created" icon="assignment" /><Card title="Submitted" value={teamTasks.filter((t) => t.status === "submitted").length} meta="Need review" /><Card title="Forwarded" value={teamTasks.filter((t) => t.final_forwarded_to_admin).length} meta="Sent to admin" /><Card title="Avg Progress" value={`${avgProgress}%`} meta="Team completion" /></div><TasksTable studentId={profile.id} /></div></Shell>;
 }
 
+function ManagerReviewInbox() {
+  const { profile } = useAuth();
+  const data = useData();
+  const teamTasks = data.tasks.filter((task) => task.manager_id === profile.id || task.assigned_by === profile.id);
+  const submitted = teamTasks.filter((task) => String(task.status).toLowerCase() === "submitted" && !task.final_forwarded_to_admin);
+  const revisionReplies = teamTasks.filter((task) => {
+    const submission = data.submissions.find((item) => item.task_id === task.id);
+    return String(task.status).toLowerCase() === "revision required" || String(submission?.status).toLowerCase() === "revision required";
+  });
+  const overdue = teamTasks.filter((task) => task.deadline && new Date(task.deadline) < new Date() && !["done", "approved", "rejected"].includes(String(task.status).toLowerCase()));
+  const readyToForward = teamTasks.filter((task) => getLatestTaskProgress(task, data.progressUpdates) >= 100 && !task.final_forwarded_to_admin && !["done", "approved", "rejected"].includes(String(task.status).toLowerCase()));
+  const taskEmployee = (task) => data.profiles.find((person) => person.id === task.student_id);
+  const taskProject = (task) => data.projects.find((project) => project.id === task.project_id);
+  return (
+    <Shell role="manager" title="Manager Review Inbox">
+      <div className="mx-auto max-w-7xl space-y-lg">
+        <div className="grid grid-cols-1 gap-md md:grid-cols-4">
+          <Card title="Submitted" value={submitted.length} meta="Need manager review" icon="publish" onClick={() => navigate("/manager/inbox")} />
+          <Card title="Revision Replies" value={revisionReplies.length} meta="Need re-check" icon="rate_review" accent="text-[#FFAB00]" onClick={() => navigate("/manager/inbox")} />
+          <Card title="Overdue" value={overdue.length} meta="Deadline passed" icon="warning" accent="text-error" onClick={() => navigate("/manager/inbox")} />
+          <Card title="Ready to Forward" value={readyToForward.length} meta="Progress 100%" icon="forward_to_inbox" accent="text-primary" onClick={() => navigate("/manager/inbox")} />
+        </div>
+        <ManagerInboxSection title="Employee Submitted Tasks" icon="publish" empty="No employee submitted tasks waiting for review.">
+          {submitted.map((task) => <ManagerInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={data.submissions.find((item) => item.task_id === task.id)?.notes || "Employee submitted work for review."} actionLabel="Review" />)}
+        </ManagerInboxSection>
+        <ManagerInboxSection title="Revision Replies" icon="rate_review" empty="No revision replies currently waiting.">
+          {revisionReplies.map((task) => <ManagerInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={task.revision_notes || "Revision needs manager re-check."} actionLabel="Re-check" />)}
+        </ManagerInboxSection>
+        <ManagerInboxSection title="Overdue Tasks" icon="warning" empty="No overdue tasks for your team.">
+          {overdue.map((task) => <ManagerInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={`Deadline: ${new Date(task.deadline).toLocaleString()}`} actionLabel="Open" />)}
+        </ManagerInboxSection>
+        <ManagerInboxSection title="Tasks Ready to Forward Admin" icon="forward_to_inbox" empty="No 100% tasks waiting to be forwarded.">
+          {readyToForward.map((task) => <ManagerInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note="Progress is 100%. Add manager remarks and forward to admin." actionLabel="Forward" />)}
+        </ManagerInboxSection>
+      </div>
+    </Shell>
+  );
+}
+
+function ManagerInboxSection({ title, icon, empty, children }) {
+  const items = React.Children.toArray(children).filter(Boolean);
+  return <section className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="flex items-center gap-sm border-b border-outline-variant/50 bg-surface-container-low px-lg py-md"><Icon className="text-primary">{icon}</Icon><h2 className="text-h3 font-h3">{title}</h2><span className="ml-auto rounded-full bg-surface px-sm py-1 text-label-bold font-label-bold text-on-surface-variant">{items.length}</span></div>{items.length ? <div>{items}</div> : <div className="p-lg"><EmptyState title={empty} body="New team items will appear here automatically." /></div>}</section>;
+}
+
+function ManagerInboxRow({ task, employee, project, note, actionLabel }) {
+  const progress = getLatestTaskProgress(task, useData().progressUpdates);
+  return <div className="grid grid-cols-1 items-center gap-md border-t border-outline-variant/30 p-md md:grid-cols-[1.3fr_1fr_1fr_1fr_1.2fr_auto]"><div><button className="font-semibold text-primary" onClick={() => navigate(`/manager/tasks/${task.id}`)} type="button">{task.task_title}</button><p className="text-body-sm text-on-surface-variant">{task.task_type}</p></div><div><p>{employee?.full_name || "-"}</p><p className="text-body-sm text-on-surface-variant">{employee?.email || ""}</p></div><ProjectTag project={project} /><div><div className="mb-1 text-body-sm">{progress}%</div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} /></div></div><p className="line-clamp-2 text-body-sm text-on-surface-variant">{note}</p><div className="flex items-center justify-end gap-sm"><StatusBadge status={task.status} /><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/manager/tasks/${task.id}`)} type="button">{actionLabel}</button></div></div>;
+}
+
 function ManagerTasksPage() {
   const { profile } = useAuth();
   const data = useData();
@@ -1752,6 +1802,7 @@ function AppRouter() {
   if (path === "/admin/reports") return <Guard role="admin"><ReportsPage /></Guard>;
   if (path === "/admin/settings") return <Guard role="admin"><SettingsPage role="admin" /></Guard>;
   if (path === "/manager/dashboard") return <Guard role="manager"><ManagerDashboard /></Guard>;
+  if (path === "/manager/inbox") return <Guard role="manager"><ManagerReviewInbox /></Guard>;
   if (path === "/manager/tasks") return <Guard role="manager"><ManagerTasksPage /></Guard>;
   if (path.startsWith("/manager/tasks/")) return <Guard role="manager"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/manager/submissions") return <Guard role="manager"><ManagerSubmissionsPage /></Guard>;
