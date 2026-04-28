@@ -21,7 +21,11 @@ alter table public.tasks
   add column if not exists week_start date,
   add column if not exists week_end date,
   add column if not exists progress_percent numeric default 0,
-  add column if not exists final_forwarded_to_admin boolean default false;
+  add column if not exists final_forwarded_to_admin boolean default false,
+  add column if not exists manager_remarks text,
+  add column if not exists manager_reviewed_at timestamp,
+  add column if not exists admin_remarks text,
+  add column if not exists admin_reviewed_at timestamp;
 
 alter table public.tasks drop constraint if exists tasks_payment_status_check;
 alter table public.tasks
