@@ -336,9 +336,7 @@ function PublicLanding() {
               <LinkButton to="/student/signup" className="flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-low px-lg py-3 text-body-md font-body-md text-on-surface transition-colors hover:bg-surface-container">Join as Student</LinkButton>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-level-2">
-            <img alt="Dashboard Interface" className="h-auto w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiIZJHvn37j1DpsI3W6uWZ55S8ik0NTck3oRzl85ssGB70hNZgX-DlOZK0ZgxNULAuhjMo9b0AfkBxlk8CM6K62F_S6AwkBqaepuW_33e6xz9-b9WT5kkHUkti8T7e1R33KCtMzga5UA-cXsd3gXhlwe6SVJdknB6tuaibSNuUrrdIMjUFeRWuLO-t2efUQAur1UaKc6shiOL_WFOdum3-EhJgt2-NRRLBA9acCRwMWCFIjL73EoFHCu2AZIJbvcskEiEe5eKNDA" />
-          </div>
+          <HeroDashboardPreview />
         </div>
       </section>
       <section className="bg-surface-container-low px-lg py-3xl">
@@ -371,6 +369,58 @@ function PublicLanding() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function HeroDashboardPreview() {
+  return (
+    <div className="hero-preview relative min-h-[420px] overflow-hidden rounded-xl border border-outline-variant/30 bg-[#050b0d] p-xl shadow-level-2 lg:min-h-[520px]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,rgba(0,82,204,0.16),transparent_28%),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[length:auto,18px_18px]" />
+      <div className="relative z-10 mx-auto max-w-[620px] pt-xl text-[#dfe8ff]">
+        <div className="mb-xl flex items-center justify-between">
+          <div>
+            <p className="text-h3 font-h3 text-white">SEO Work</p>
+            <p className="mt-1 text-body-sm text-white/45">Live task velocity overview</p>
+          </div>
+          <div className="flex items-center gap-sm text-white/50">
+            <Icon className="text-[20px]">notifications</Icon>
+            <Icon className="text-[20px]">more_horiz</Icon>
+          </div>
+        </div>
+        <div className="space-y-md">
+          {[
+            ["Keyword mapping", "Submitted", "92%"],
+            ["Technical audit", "In progress", "68%"],
+            ["Backlink outreach", "Pending", "35%"]
+          ].map(([title, status, progress]) => (
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-md" key={title}>
+              <div className="mb-sm flex items-center justify-between gap-md">
+                <div>
+                  <p className="font-semibold text-white">{title}</p>
+                  <p className="text-body-sm text-white/45">{status}</p>
+                </div>
+                <span className="text-body-sm font-semibold text-[#65dca4]">{progress}</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-[#1d9bf0]" style={{ width: progress }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2xl grid grid-cols-3 gap-md">
+          {[
+            ["98", "Done"],
+            ["10", "In review"],
+            ["30", "Pending"]
+          ].map(([value, label]) => (
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-md text-center" key={label}>
+              <p className="text-h3 font-h3 text-white">{value}</p>
+              <p className="mt-1 text-body-sm text-white/45">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
