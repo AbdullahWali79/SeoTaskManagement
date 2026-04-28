@@ -78,6 +78,14 @@ function AuthProvider({ children }) {
     return data;
   };
 
+  const withTimeout = (promise, message = "Login request timed out. Please try again.") =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        window.setTimeout(() => reject(new Error(message)), 15000);
+      })
+    ]);
+
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setProfile(demoProfiles[0]);
@@ -100,11 +108,9 @@ function AuthProvider({ children }) {
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession);
       if (nextSession?.user) {
-        try {
-          await loadProfile(nextSession.user);
-        } catch (error) {
-          console.error(error);
-        }
+        window.setTimeout(() => {
+          loadProfile(nextSession.user).catch((error) => console.error(error));
+        }, 0);
       } else {
         setProfile(null);
       }
@@ -119,9 +125,9 @@ function AuthProvider({ children }) {
       setProfile(found);
       return found;
     }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await withTimeout(supabase.auth.signInWithPassword({ email, password }));
     if (error) throw error;
-    const nextProfile = await loadProfile(data.user);
+    const nextProfile = await withTimeout(loadProfile(data.user), "Login succeeded, but profile loading timed out. Please check Supabase policies.");
     if (!nextProfile || nextProfile.role !== role) {
       await supabase.auth.signOut();
       throw new Error(!nextProfile ? "Login succeeded, but no profile row exists for this user. Create/approve the profile in Supabase." : `This account is registered as ${nextProfile.role}, not ${role}.`);
