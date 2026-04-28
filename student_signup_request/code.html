@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Signup Request - SEO TaskFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#f9f9ff",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#ecf0ff",
+                    "tertiary-fixed-dim": "#c9bfff",
+                    "surface-container": "#e7eeff",
+                    "surface-bright": "#f9f9ff",
+                    "on-secondary-container": "#00734c",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "secondary-container": "#82f9be",
+                    "on-primary-container": "#c4d2ff",
+                    "primary": "#003d9b",
+                    "tertiary": "#432f9c",
+                    "surface-dim": "#cadbfc",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#b2c5ff",
+                    "surface-tint": "#0c56d0",
+                    "primary-fixed": "#dae2ff",
+                    "on-tertiary-container": "#d5ccff",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#dfe8ff",
+                    "tertiary-container": "#5b49b5",
+                    "secondary": "#006c47",
+                    "inverse-surface": "#20314b",
+                    "on-tertiary-fixed": "#1a0063",
+                    "on-tertiary-fixed-variant": "#4633a0",
+                    "error": "#ba1a1a",
+                    "on-error": "#ffffff",
+                    "on-secondary-fixed": "#002113",
+                    "on-surface": "#091c35",
+                    "primary-container": "#0052cc",
+                    "surface": "#f9f9ff",
+                    "on-secondary-fixed-variant": "#005235",
+                    "on-surface-variant": "#434654",
+                    "surface-container-low": "#f0f3ff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#091c35",
+                    "surface-container-highest": "#d6e3ff",
+                    "on-primary-fixed": "#001848",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "tertiary-fixed": "#e5deff",
+                    "secondary-fixed-dim": "#65dca4",
+                    "secondary-fixed": "#82f9be",
+                    "outline": "#737685",
+                    "error-container": "#ffdad6",
+                    "outline-variant": "#c3c6d6",
+                    "surface-variant": "#d6e3ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "2xl": "48px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "xs": "4px",
+                    "3xl": "64px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "label-bold": ["Inter"],
+                    "code": ["monospace"],
+                    "h2": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "h3": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "h1": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "label-bold": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "code": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "600"}],
+                    "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex items-center justify-center p-md sm:p-lg">
+<div class="w-full max-w-5xl bg-surface-container-lowest rounded-xl shadow-md overflow-hidden flex flex-col md:flex-row border border-outline-variant/30">
+<!-- Left Branding Panel -->
+<div class="md:w-5/12 bg-primary text-on-primary p-xl flex flex-col justify-between relative overflow-hidden hidden md:flex">
+<!-- Decorative overlay -->
+<div class="absolute inset-0 opacity-20 mix-blend-overlay bg-cover bg-center" data-alt="Abstract data visualization with glowing blue nodes and connecting lines on a dark background representing SEO networks" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHl3E_LSBJZwH5v5NSgz2UO3xpXrd7Qt7y_vohW6I0HtuPVF8cd4uTtGV5LDw_2MHSxk0aXSHiUCB2CipboWRuvxB4WyGOJAoUl4bRP8mEcQ82oNjVBEzCm2i6VIbVQGOtgOC1eGELsdM8O471-zNYOA-XqhHm57ntFDfyl21Cc1XztezMSLzXqlupyrEbEH7vVL3UckY3B9aZhQC8pkFGify_UTKwDKnVJkR63-MgR4FByN-DNY8otHekcYGSwiADhu5KBgzFAQ');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary to-transparent opacity-60"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-sm mb-3xl">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-h3 text-h3 tracking-tight">SEO TaskFlow</span>
+</div>
+<div class="mt-auto">
+<h2 class="font-h1 text-h1 mb-md">Master Your Workflow.</h2>
+<p class="font-body-lg text-body-lg text-on-primary-container opacity-90 max-w-sm">
+                        Join the systematic platform designed for high-performance SEO agencies and professionals. Streamline your data clarity and task velocity.
+                    </p>
+</div>
+</div>
+<!-- Decorative minimal pattern bottom left -->
+<div class="absolute bottom-0 left-0 w-32 h-32 opacity-10 pointer-events-none">
+<svg fill="none" viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<circle cx="20" cy="80" r="40" stroke="currentColor" stroke-width="2"></circle>
+<circle cx="20" cy="80" r="20" stroke="currentColor" stroke-width="2"></circle>
+</svg>
+</div>
+</div>
+<!-- Right Form Panel -->
+<div class="w-full md:w-7/12 p-lg sm:p-xl md:p-2xl flex flex-col justify-center">
+<!-- Mobile Header (Hidden on Desktop) -->
+<div class="flex items-center gap-sm mb-lg md:hidden text-primary">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-h3 text-h3 tracking-tight">SEO TaskFlow</span>
+</div>
+<div class="mb-xl">
+<h1 class="font-h2 text-h2 text-on-surface mb-xs">Student Signup Request</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Submit your details to request access to the student environment.</p>
+</div>
+<form class="space-y-md">
+<!-- Full Name -->
+<div>
+<label class="block font-label-bold text-label-bold text-on-surface mb-xs" for="fullName">Full Name</label>
+<input class="block w-full rounded-lg border-outline-variant bg-surface text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary shadow-sm placeholder:text-outline py-2.5 px-3 transition-colors" id="fullName" name="fullName" placeholder="e.g. Jane Doe" required="" type="text"/>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+<!-- Email -->
+<div>
+<label class="block font-label-bold text-label-bold text-on-surface mb-xs" for="email">Email</label>
+<input class="block w-full rounded-lg border-outline-variant bg-surface text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary shadow-sm placeholder:text-outline py-2.5 px-3 transition-colors" id="email" name="email" placeholder="jane@example.com" required="" type="email"/>
+</div>
+<!-- Phone -->
+<div>
+<label class="block font-label-bold text-label-bold text-on-surface mb-xs" for="phone">Phone</label>
+<input class="block w-full rounded-lg border-outline-variant bg-surface text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary shadow-sm placeholder:text-outline py-2.5 px-3 transition-colors" id="phone" name="phone" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+</div>
+<!-- Skill Level -->
+<div>
+<label class="block font-label-bold text-label-bold text-on-surface mb-xs" for="skillLevel">Skill Level</label>
+<div class="relative">
+<select class="block w-full rounded-lg border-outline-variant bg-surface text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary shadow-sm py-2.5 pl-3 pr-10 appearance-none transition-colors" id="skillLevel" name="skillLevel" required="">
+<option class="text-outline" disabled="" selected="" value="">Select your experience level</option>
+<option value="beginner">Beginner</option>
+<option value="intermediate">Intermediate</option>
+<option value="expert">Expert</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Message -->
+<div>
+<label class="block font-label-bold text-label-bold text-on-surface mb-xs" for="message">Message</label>
+<textarea class="block w-full rounded-lg border-outline-variant bg-surface text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary shadow-sm placeholder:text-outline py-2.5 px-3 transition-colors resize-y" id="message" name="message" placeholder="Briefly describe your goals..." required="" rows="3"></textarea>
+</div>
+<!-- Submit Button -->
+<div class="pt-sm">
+<button class="w-full bg-primary hover:bg-primary-fixed-variant text-on-primary font-label-bold text-label-bold py-3 px-4 rounded-lg shadow-sm transition-all duration-200 flex justify-center items-center gap-2 hover:shadow-md active:scale-[0.99]" type="submit">
+<span>Submit Request</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Footer -->
+<div class="mt-xl pt-lg border-t border-outline-variant/30 text-center">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Already have an account? 
+                    <a class="text-primary hover:text-primary-fixed-variant font-label-bold text-label-bold transition-colors ml-1" href="#">Login</a>
+</p>
+</div>
+</div>
+</div>
+</body></html>

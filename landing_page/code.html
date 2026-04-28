@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SEO TaskFlow - Manage SEO Tasks and Track Progress</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "background": "#f9f9ff",
+                            "on-secondary": "#ffffff",
+                            "inverse-on-surface": "#ecf0ff",
+                            "tertiary-fixed-dim": "#c9bfff",
+                            "surface-container": "#e7eeff",
+                            "surface-bright": "#f9f9ff",
+                            "on-secondary-container": "#00734c",
+                            "on-primary": "#ffffff",
+                            "primary-fixed-dim": "#b2c5ff",
+                            "secondary-container": "#82f9be",
+                            "on-primary-container": "#c4d2ff",
+                            "primary": "#003d9b",
+                            "tertiary": "#432f9c",
+                            "surface-dim": "#cadbfc",
+                            "on-tertiary": "#ffffff",
+                            "inverse-primary": "#b2c5ff",
+                            "surface-tint": "#0c56d0",
+                            "primary-fixed": "#dae2ff",
+                            "on-tertiary-container": "#d5ccff",
+                            "on-error-container": "#93000a",
+                            "surface-container-high": "#dfe8ff",
+                            "tertiary-container": "#5b49b5",
+                            "secondary": "#006c47",
+                            "inverse-surface": "#20314b",
+                            "on-tertiary-fixed": "#1a0063",
+                            "on-tertiary-fixed-variant": "#4633a0",
+                            "error": "#ba1a1a",
+                            "on-error": "#ffffff",
+                            "on-secondary-fixed": "#002113",
+                            "on-surface": "#091c35",
+                            "primary-container": "#0052cc",
+                            "surface": "#f9f9ff",
+                            "on-secondary-fixed-variant": "#005235",
+                            "on-surface-variant": "#434654",
+                            "surface-container-low": "#f0f3ff",
+                            "surface-container-lowest": "#ffffff",
+                            "on-background": "#091c35",
+                            "surface-container-highest": "#d6e3ff",
+                            "on-primary-fixed": "#001848",
+                            "on-primary-fixed-variant": "#0040a2",
+                            "tertiary-fixed": "#e5deff",
+                            "secondary-fixed-dim": "#65dca4",
+                            "secondary-fixed": "#82f9be",
+                            "outline": "#737685",
+                            "error-container": "#ffdad6",
+                            "outline-variant": "#c3c6d6",
+                            "surface-variant": "#d6e3ff"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "sm": "8px",
+                            "2xl": "48px",
+                            "md": "16px",
+                            "lg": "24px",
+                            "xl": "32px",
+                            "xs": "4px",
+                            "3xl": "64px"
+                    },
+                    "fontFamily": {
+                            "body-md": ["Inter"],
+                            "label-bold": ["Inter"],
+                            "code": ["monospace"],
+                            "h2": ["Inter"],
+                            "body-lg": ["Inter"],
+                            "h3": ["Inter"],
+                            "body-sm": ["Inter"],
+                            "h1": ["Inter"]
+                    },
+                    "fontSize": {
+                            "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+                            "label-bold": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                            "code": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                            "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                            "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+                            "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "600"}],
+                            "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400"}],
+                            "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden">
+<!-- Navigation suppressed for linear landing page / marketing context to prioritize canvas intent -->
+<main>
+<!-- Hero Section -->
+<section class="relative pt-3xl pb-2xl px-lg lg:pt-32 lg:pb-3xl overflow-hidden bg-surface-container-lowest">
+<!-- Decorative Background Element -->
+<div class="absolute inset-0 bg-gradient-to-br from-surface-container-low to-surface-bright opacity-50 z-0"></div>
+<div class="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-2xl items-center">
+<div class="flex flex-col gap-lg">
+<div class="inline-flex items-center px-3 py-1 rounded-full bg-primary-fixed/30 text-on-primary-fixed-variant text-label-bold font-label-bold w-max border border-primary-fixed">
+<span class="material-symbols-outlined text-[16px] mr-2">rocket_launch</span>
+                        New Features Released
+                    </div>
+<h1 class="font-h1 text-h1 text-on-background lg:text-5xl lg:leading-tight">
+                        Manage SEO Tasks, Track Progress, and Improve Team Performance
+                    </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+                        A systematic platform for assigning SEO tasks, tracking submissions, and generating transparent reports for agencies and high-performance teams.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-md mt-sm">
+<button class="bg-primary hover:bg-primary/90 text-on-primary font-body-md text-body-md px-lg py-3 rounded-lg shadow-sm transition-shadow hover:shadow-md flex items-center justify-center">
+                            Login
+                        </button>
+<button class="bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-on-surface font-body-md text-body-md px-lg py-3 rounded-lg transition-colors flex items-center justify-center">
+                            Join as Student
+                        </button>
+</div>
+</div>
+<div class="relative rounded-xl overflow-hidden shadow-[0_12px_24px_rgba(0,82,204,0.1)] border border-outline-variant/30 bg-surface-container-lowest">
+<img alt="Dashboard Interface" class="w-full h-auto object-cover" data-alt="modern saas dashboard interface showing charts, graphs and data tables on a laptop screen with a clean white and blue color scheme" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiIZJHvn37j1DpsI3W6uWZ55S8ik0NTck3oRzl85ssGB70hNZgX-DlOZK0ZgxNULAuhjMo9b0AfkBxlk8CM6K62F_S6AwkBqaepuW_33e6xz9-b9WT5kkHUkti8T7e1R33KCtMzga5UA-cXsd3gXhlwe6SVJdknB6tuaibSNuUrrdIMjUFeRWuLO-t2efUQAur1UaKc6shiOL_WFOdum3-EhJgt2-NRRLBA9acCRwMWCFIjL73EoFHCu2AZIJbvcskEiEe5eKNDA"/>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid Section -->
+<section class="py-3xl px-lg bg-surface-container-low">
+<div class="max-w-7xl mx-auto">
+<div class="text-center mb-2xl">
+<h2 class="font-h2 text-h2 text-on-background mb-md">Systematic Workflow Control</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+                        Everything you need to manage your SEO task pipeline, from assignment to final reporting, without the cognitive overload.
+                    </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<!-- Feature 1: Large Span -->
+<div class="md:col-span-2 bg-surface-container-lowest rounded-xl p-lg shadow-sm border border-outline-variant/30 flex flex-col justify-between overflow-hidden relative group">
+<div class="relative z-10 mb-xl">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center mb-md text-on-primary-fixed">
+<span class="material-symbols-outlined">assignment</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-sm">SEO Task Assignment</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">Distribute specialized SEO tasks across your team with precision. Set deadlines, attach resources, and monitor the pipeline.</p>
+</div>
+<div class="mt-auto h-48 rounded-lg overflow-hidden border border-outline-variant/30 relative">
+<img alt="Task Assignment Interface" class="w-full h-full object-cover" data-alt="close up of a modern kanban board interface with digital task cards showing assignments and due dates" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMWI2bOyE_swwI78v7_zkNWNU4fekRuIhDw00SA8z_lQJbZygJL7fj1qtMS63JdiQlwRn5l3rfB0nPWBM6rmK7Sn5kwywJBQ2VeaZJ56EL5nOeklHU9UQiXFf67ZCndr07PxWSO7oVIY6FJ8yUGlZ_1_qI0xGKtRvFH1xELA3tzz0j9u3pDmb9yL9bCQWyf_LQ9frtuYoHvNW2snsVwjVdRUpMznKl4AmML5Z4O5GTfxr80TDlbrHiaF7Hpimef8pdjZm9JFt80Q"/>
+</div>
+</div>
+<!-- Feature 2: Vertical -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-sm border border-outline-variant/30 flex flex-col">
+<div class="w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center mb-md text-on-tertiary-fixed">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-sm">Student Progress Tracking</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg flex-grow">Real-time visibility into individual performance metrics and completion rates.</p>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden mt-auto">
+<div class="h-full bg-secondary w-3/4 rounded-full"></div>
+</div>
+</div>
+<!-- Feature 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-sm border border-outline-variant/30">
+<div class="w-12 h-12 rounded-lg bg-surface-variant flex items-center justify-center mb-md text-on-surface">
+<span class="material-symbols-outlined">rate_review</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-sm">Admin Review &amp; Ratings</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Evaluate submissions systematically, provide feedback, and maintain quality control standards.</p>
+</div>
+<!-- Feature 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-sm border border-outline-variant/30">
+<div class="w-12 h-12 rounded-lg bg-error-container flex items-center justify-center mb-md text-on-error-container">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-sm">PDF/Excel Reports</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Generate professional, agency-ready reports in multiple formats with a single click.</p>
+</div>
+<!-- Feature 5 -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-sm border border-outline-variant/30">
+<div class="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center mb-md text-on-secondary-container">
+<span class="material-symbols-outlined">share</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-background mb-sm">WhatsApp Report Sharing</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Instantly dispatch reports directly to clients or stakeholders via WhatsApp integration.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works Section -->
+<section class="py-3xl px-lg bg-surface-container-lowest">
+<div class="max-w-5xl mx-auto">
+<div class="text-center mb-2xl">
+<h2 class="font-h2 text-h2 text-on-background mb-md">How It Works</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">A streamlined process designed for velocity and accountability.</p>
+</div>
+<div class="space-y-xl">
+<!-- Step 1 -->
+<div class="flex flex-col md:flex-row gap-lg items-start">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-on-primary font-h3 text-h3 flex items-center justify-center border-4 border-surface-container-low z-10">1</div>
+<div class="bg-surface-container p-lg rounded-xl flex-grow shadow-sm">
+<h4 class="font-h3 text-h3 text-on-background mb-xs">Assign &amp; Brief</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Admins create detailed SEO tasks, set parameters, and assign them to specific team members or students.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col md:flex-row gap-lg items-start">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-on-primary font-h3 text-h3 flex items-center justify-center border-4 border-surface-container-low z-10">2</div>
+<div class="bg-surface-container p-lg rounded-xl flex-grow shadow-sm">
+<h4 class="font-h3 text-h3 text-on-background mb-xs">Execute &amp; Submit</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Students access their dashboard, execute tasks according to guidelines, and submit proofs directly through the platform.</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col md:flex-row gap-lg items-start">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-on-primary font-h3 text-h3 flex items-center justify-center border-4 border-surface-container-low z-10">3</div>
+<div class="bg-surface-container p-lg rounded-xl flex-grow shadow-sm">
+<h4 class="font-h3 text-h3 text-on-background mb-xs">Review &amp; Report</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Admins review submissions, provide ratings, and generate consolidated reports for client distribution.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Section -->
+<footer class="bg-inverse-surface py-2xl px-lg border-t border-outline-variant/10">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-xl">
+<div>
+<div class="flex items-center gap-sm mb-lg">
+<span class="material-symbols-outlined text-inverse-primary text-[24px]">task_alt</span>
+<span class="font-h3 text-h3 text-on-tertiary">SEO TaskFlow</span>
+</div>
+<p class="font-body-md text-body-md text-inverse-on-surface/70 max-w-sm mb-lg">
+                    Systematic SEO task management for high-performance agencies and educational cohorts.
+                </p>
+<p class="font-body-sm text-body-sm text-inverse-on-surface/50">
+                    © 2024 SEO TaskFlow. All rights reserved.
+                </p>
+</div>
+<div class="bg-inverse-surface/50 p-lg rounded-xl border border-outline-variant/10">
+<h4 class="font-h3 text-h3 text-on-tertiary mb-md">Contact Us</h4>
+<form class="flex flex-col gap-sm">
+<input class="bg-surface-container-lowest/10 border border-outline-variant/20 rounded-lg px-md py-2 text-on-tertiary placeholder:text-inverse-on-surface/50 font-body-md focus:outline-none focus:ring-1 focus:ring-inverse-primary" placeholder="Email Address" type="email"/>
+<textarea class="bg-surface-container-lowest/10 border border-outline-variant/20 rounded-lg px-md py-2 text-on-tertiary placeholder:text-inverse-on-surface/50 font-body-md focus:outline-none focus:ring-1 focus:ring-inverse-primary" placeholder="Message" rows="3"></textarea>
+<button class="bg-inverse-primary hover:bg-inverse-primary/90 text-on-primary-fixed font-body-md text-body-md px-md py-2 rounded-lg transition-colors mt-xs w-max" type="button">
+                        Send Message
+                    </button>
+</form>
+</div>
+</div>
+</footer>
+</body></html>
