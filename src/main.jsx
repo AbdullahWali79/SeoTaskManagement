@@ -325,8 +325,8 @@ function PublicLanding() {
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-surface-container-low to-surface-bright opacity-50" />
         <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-2xl lg:grid-cols-2">
           <div className="flex flex-col gap-lg">
-            <div className="inline-flex w-max items-center rounded-full border border-primary-fixed bg-primary-fixed/30 px-3 py-1 text-label-bold font-label-bold text-on-primary-fixed-variant">
-              <Icon className="mr-2 text-[16px]">rocket_launch</Icon> New Features Released
+            <div className="w-max rounded-xl border border-primary-fixed bg-primary-fixed/40 px-4 py-2 shadow-level-1">
+              <span className="brand-pulse text-h2 font-black tracking-tight text-primary">SwiftRankSolution</span>
             </div>
             <h1 className="font-h1 text-h1 text-on-background lg:text-5xl lg:leading-tight">Manage SEO Tasks, Track Progress, and Improve Team Performance</h1>
             <p className="max-w-xl text-body-lg font-body-lg text-on-surface-variant">A systematic platform for assigning SEO tasks, tracking submissions, and generating transparent reports for agencies and high-performance teams.</p>

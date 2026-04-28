@@ -79,3 +79,22 @@ body {
 .sheet-table tbody tr:hover {
   background: rgba(240, 243, 255, 0.65);
 }
+
+.brand-pulse {
+  display: inline-block;
+  animation: brandPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes brandPulse {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: translateY(0) scale(1);
+    text-shadow: 0 0 0 rgba(0, 82, 204, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.03);
+    text-shadow: 0 10px 24px rgba(0, 82, 204, 0.22);
+  }
+}
