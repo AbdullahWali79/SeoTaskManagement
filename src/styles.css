@@ -85,6 +85,34 @@ body {
   animation: brandPulse 2.4s ease-in-out infinite;
 }
 
+.rich-editor:empty::before {
+  color: #737685;
+  content: "Write detailed instructions here. Add URLs, bullets, numbered steps, and formatted notes...";
+}
+
+.rich-editor a,
+.rich-content a {
+  color: #003d9b;
+  text-decoration: underline;
+}
+
+.rich-editor ul,
+.rich-content ul {
+  list-style: disc;
+  margin: 8px 0 8px 24px;
+}
+
+.rich-editor ol,
+.rich-content ol {
+  list-style: decimal;
+  margin: 8px 0 8px 24px;
+}
+
+.rich-editor p,
+.rich-content p {
+  margin: 6px 0;
+}
+
 @keyframes brandPulse {
   0%,
   100% {

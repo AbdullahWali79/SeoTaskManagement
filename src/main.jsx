@@ -570,6 +570,65 @@ function SelectField({ label, value, onChange, options }) {
   );
 }
 
+function RichTextEditor({ label, value, onChange }) {
+  const editorRef = React.useRef(null);
+
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== (value || "")) {
+      editorRef.current.innerHTML = value || "";
+    }
+  }, [value]);
+
+  const runCommand = (command, commandValue = null) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, commandValue);
+    onChange(editorRef.current?.innerHTML || "");
+  };
+
+  const addLink = () => {
+    const url = window.prompt("Paste URL");
+    if (!url) return;
+    const safeUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    runCommand("createLink", safeUrl);
+  };
+
+  return (
+    <div className="flex flex-col gap-xs">
+      <span className="text-label-bold font-label-bold text-on-surface">{label}</span>
+      <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface">
+        <div className="flex flex-wrap gap-xs border-b border-outline-variant/50 bg-surface-container-low p-sm">
+          {[
+            ["format_bold", "bold", "Bold"],
+            ["format_italic", "italic", "Italic"],
+            ["format_underlined", "underline", "Underline"],
+            ["format_list_bulleted", "insertUnorderedList", "Bullet list"],
+            ["format_list_numbered", "insertOrderedList", "Numbered list"]
+          ].map(([icon, command, title]) => (
+            <button className="rounded-md p-2 text-on-surface-variant hover:bg-surface-container hover:text-primary" key={command} onClick={() => runCommand(command)} title={title} type="button">
+              <Icon className="text-[20px]">{icon}</Icon>
+            </button>
+          ))}
+          <button className="rounded-md p-2 text-on-surface-variant hover:bg-surface-container hover:text-primary" onClick={addLink} title="Insert link" type="button">
+            <Icon className="text-[20px]">link</Icon>
+          </button>
+          <button className="rounded-md p-2 text-on-surface-variant hover:bg-surface-container hover:text-primary" onClick={() => runCommand("removeFormat")} title="Clear formatting" type="button">
+            <Icon className="text-[20px]">format_clear</Icon>
+          </button>
+        </div>
+        <div
+          className="rich-editor min-h-56 px-md py-3 text-body-md text-on-surface focus:outline-none"
+          contentEditable
+          onBlur={(event) => onChange(event.currentTarget.innerHTML)}
+          onInput={(event) => onChange(event.currentTarget.innerHTML)}
+          ref={editorRef}
+          suppressContentEditableWarning
+        />
+      </div>
+      <p className="text-body-sm text-on-surface-variant">Add unlimited instructions, URLs, bullets, and formatted notes.</p>
+    </div>
+  );
+}
+
 function PersonSearchField({ people, value, onChange, label = "Assign Active Employee", placeholder = "Type employee name or email..." }) {
   const selected = people.find((student) => student.id === value);
   const [query, setQuery] = useState(selected?.full_name || "");
@@ -1143,7 +1202,7 @@ function TaskForm({ initial = {}, onSave, managerMode = false }) {
     onSave(payload);
     setForm({ priority: "Medium", status: "pending" });
   };
-  return <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={submitTask}><Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} /><SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} /><PersonSearchField people={employees} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} />{!managerMode && <PersonSearchField people={managers} value={form.manager_id} onChange={(manager_id) => setForm({ ...form, manager_id })} label="Assign Manager (Optional)" placeholder="Type manager name or email..." />}<ProjectSearchField projects={projects} value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} /><Field label="Payment Amount" type="number" value={form.payment_amount} onChange={(payment_amount) => setForm({ ...form, payment_amount })} required={false} /><Field label="Week Start" type="date" value={form.week_start || ""} onChange={(week_start) => setForm({ ...form, week_start })} required={false} /><Field label="Week End" type="date" value={form.week_end || ""} onChange={(week_end) => setForm({ ...form, week_end })} required={false} /><Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} /><Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} /><Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} /><Field label="Deadline" type="datetime-local" value={form.deadline?.slice(0, 16)} onChange={(deadline) => setForm({ ...form, deadline: new Date(deadline).toISOString() })} /><SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} /><SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} /><label className="md:col-span-2 flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Instructions</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={form.instructions || ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })} /></label><button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Weekly Task</button></form>;
+  return <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={submitTask}><Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} /><SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} /><PersonSearchField people={employees} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} />{!managerMode && <PersonSearchField people={managers} value={form.manager_id} onChange={(manager_id) => setForm({ ...form, manager_id })} label="Assign Manager (Optional)" placeholder="Type manager name or email..." />}<ProjectSearchField projects={projects} value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} /><Field label="Payment Amount" type="number" value={form.payment_amount} onChange={(payment_amount) => setForm({ ...form, payment_amount })} required={false} /><Field label="Week Start" type="date" value={form.week_start || ""} onChange={(week_start) => setForm({ ...form, week_start })} required={false} /><Field label="Week End" type="date" value={form.week_end || ""} onChange={(week_end) => setForm({ ...form, week_end })} required={false} /><Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} /><Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} /><Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} /><Field label="Deadline" type="datetime-local" value={form.deadline?.slice(0, 16)} onChange={(deadline) => setForm({ ...form, deadline: new Date(deadline).toISOString() })} /><SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} /><SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} /><div className="md:col-span-2"><RichTextEditor label="Instructions" value={form.instructions || ""} onChange={(instructions) => setForm({ ...form, instructions })} /></div><button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Weekly Task</button></form>;
 }
 
 function TasksPage() {
@@ -1169,7 +1228,7 @@ function TaskDetail({ id, studentMode = false }) {
   const shellRole = profile?.role || (studentMode ? "employee" : "admin");
   if (!task) return <Shell role={shellRole} title="Task Detail"><EmptyState title="Task not found" body="The selected task does not exist." /></Shell>;
   const project = data.projects.find((p) => p.id === task.project_id);
-  return <Shell role={shellRole} title="Task Detail"><div className="grid grid-cols-1 gap-lg lg:grid-cols-3"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 lg:col-span-2"><div className="mb-md flex items-start justify-between gap-3"><div><h1 className="text-h1 font-h1">{task.task_title}</h1><p className="mt-1 text-body-md text-on-surface-variant">{task.task_type}</p></div><StatusBadge status={task.status} /></div><div className="grid grid-cols-1 gap-md md:grid-cols-2"><Info label="Project" value={<ProjectTag project={project} />} /><Info label="Target URL" value={task.target_url} /><Info label="Posting URL" value={task.posting_url || "-"} /><Info label="Approx Time" value={task.approx_time} /><Info label="Deadline" value={task.deadline ? new Date(task.deadline).toLocaleString() : "-"} /><Info label="Priority" value={task.priority} /><Info label="Payment Amount" value={`Rs. ${Number(task.payment_amount || 0)}`} /><Info label="Progress" value={`${Number(task.progress_percent || 0)}%`} /></div><div className="mt-lg"><h3 className="mb-sm text-h3 font-h3">Instructions</h3><p className="whitespace-pre-line rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">{task.instructions}</p></div><ProgressHistory task={task} /></div><div>{shellRole === "employee" ? <SubmitTask task={task} /> : <AdminReviewPanel task={task} />}</div></div></Shell>;
+  return <Shell role={shellRole} title="Task Detail"><div className="grid grid-cols-1 gap-lg lg:grid-cols-3"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 lg:col-span-2"><div className="mb-md flex items-start justify-between gap-3"><div><h1 className="text-h1 font-h1">{task.task_title}</h1><p className="mt-1 text-body-md text-on-surface-variant">{task.task_type}</p></div><StatusBadge status={task.status} /></div><div className="grid grid-cols-1 gap-md md:grid-cols-2"><Info label="Project" value={<ProjectTag project={project} />} /><Info label="Target URL" value={task.target_url} /><Info label="Posting URL" value={task.posting_url || "-"} /><Info label="Approx Time" value={task.approx_time} /><Info label="Deadline" value={task.deadline ? new Date(task.deadline).toLocaleString() : "-"} /><Info label="Priority" value={task.priority} /><Info label="Payment Amount" value={`Rs. ${Number(task.payment_amount || 0)}`} /><Info label="Progress" value={`${Number(task.progress_percent || 0)}%`} /></div><div className="mt-lg"><h3 className="mb-sm text-h3 font-h3">Instructions</h3><div className="rich-content rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant" dangerouslySetInnerHTML={{ __html: task.instructions || "" }} /></div><ProgressHistory task={task} /></div><div>{shellRole === "employee" ? <SubmitTask task={task} /> : <AdminReviewPanel task={task} />}</div></div></Shell>;
 }
 
 function Info({ label, value }) {
@@ -1311,7 +1370,80 @@ function ReportsPage() {
 
 function SettingsPage({ role }) {
   const { profile } = useAuth();
-  return <Shell role={role} title="Settings"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h1 className="text-h2 font-h2">Account Settings</h1><p className="mt-2 text-on-surface-variant">Signed in as {profile?.full_name || profile?.email}. Manage Supabase Auth settings from the Supabase dashboard.</p><div className="mt-lg rounded-lg bg-surface-container-low p-md text-body-sm text-on-surface-variant">Environment: {isSupabaseConfigured ? "Supabase connected" : "Demo mode. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env."}</div></div></Shell>;
+  const data = useData();
+  const notify = useToast();
+  const [ownPassword, setOwnPassword] = useState("");
+  const [adminPasswordForm, setAdminPasswordForm] = useState({ user_id: "", password: "" });
+  const people = data.profiles.filter((item) => ["employee", "manager"].includes(item.role));
+
+  const changeOwnPassword = async (event) => {
+    event.preventDefault();
+    try {
+      if (ownPassword.length < 6) throw new Error("Password must be at least 6 characters.");
+      if (!isSupabaseConfigured) throw new Error("Supabase is not configured.");
+      const { error } = await supabase.auth.updateUser({ password: ownPassword });
+      if (error) throw error;
+      setOwnPassword("");
+      notify("Your password has been changed.");
+    } catch (error) {
+      notify(error.message, "error");
+    }
+  };
+
+  const changeEmployeePassword = async (event) => {
+    event.preventDefault();
+    try {
+      if (!adminPasswordForm.user_id) throw new Error("Select an employee or manager.");
+      if (adminPasswordForm.password.length < 6) throw new Error("Password must be at least 6 characters.");
+      const { error } = await supabase.functions.invoke("admin-set-password", {
+        body: {
+          user_id: adminPasswordForm.user_id,
+          password: adminPasswordForm.password
+        }
+      });
+      if (error) throw error;
+      setAdminPasswordForm({ user_id: "", password: "" });
+      notify("Employee password has been changed.");
+    } catch (error) {
+      notify(`${error.message}. Deploy the admin-set-password Edge Function if this is the first time.`, "error");
+    }
+  };
+
+  return (
+    <Shell role={role} title="Settings">
+      <div className="space-y-lg">
+        <div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1">
+          <h1 className="text-h2 font-h2">Account Settings</h1>
+          <p className="mt-2 text-on-surface-variant">Signed in as {profile?.full_name || profile?.email}.</p>
+          <div className="mt-lg rounded-lg bg-surface-container-low p-md text-body-sm text-on-surface-variant">Environment: {isSupabaseConfigured ? "Supabase connected" : "Demo mode. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env."}</div>
+        </div>
+        <form className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={changeOwnPassword}>
+          <h2 className="mb-md text-h3 font-h3">Change My Password</h2>
+          <div className="grid grid-cols-1 gap-md md:grid-cols-[1fr_auto]">
+            <Field label="New Password" type="password" value={ownPassword} onChange={setOwnPassword} placeholder="Enter new password" />
+            <button className="self-end rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-white" type="submit">Update Password</button>
+          </div>
+        </form>
+        {role === "admin" && (
+          <form className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={changeEmployeePassword}>
+            <h2 className="mb-sm text-h3 font-h3">Change Employee / Manager Password</h2>
+            <p className="mb-md text-body-md text-on-surface-variant">This uses a secure Supabase Edge Function with the service role key. The service role key must never be exposed in the browser.</p>
+            <div className="grid grid-cols-1 gap-md md:grid-cols-3">
+              <label className="flex flex-col gap-xs">
+                <span className="text-label-bold font-label-bold text-on-surface">Employee / Manager</span>
+                <select className="w-full rounded-lg border border-outline-variant bg-surface px-md py-[10px] text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={adminPasswordForm.user_id} onChange={(event) => setAdminPasswordForm({ ...adminPasswordForm, user_id: event.target.value })}>
+                  <option value="">Select person</option>
+                  {people.map((person) => <option key={person.id} value={person.id}>{person.full_name || person.email} ({person.role})</option>)}
+                </select>
+              </label>
+              <Field label="New Password" type="password" value={adminPasswordForm.password} onChange={(password) => setAdminPasswordForm({ ...adminPasswordForm, password })} placeholder="Enter new password" />
+              <button className="self-end rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-white" type="submit">Set Password</button>
+            </div>
+          </form>
+        )}
+      </div>
+    </Shell>
+  );
 }
 
 function AppRouter() {
