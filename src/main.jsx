@@ -68,7 +68,12 @@ function AuthProvider({ children }) {
 
   const loadProfile = async (user) => {
     if (!user || !isSupabaseConfigured) return null;
-    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    if (error) {
+      console.error("Profile lookup failed", error);
+      setProfile(null);
+      throw new Error(`Profile lookup failed: ${error.message}`);
+    }
     setProfile(data || null);
     return data;
   };
@@ -81,12 +86,28 @@ function AuthProvider({ children }) {
     }
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
-      await loadProfile(data.session?.user);
+      if (data.session?.user) {
+        try {
+          await loadProfile(data.session.user);
+        } catch (error) {
+          console.error(error);
+        }
+      } else {
+        setProfile(null);
+      }
       setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession);
-      await loadProfile(nextSession?.user);
+      if (nextSession?.user) {
+        try {
+          await loadProfile(nextSession.user);
+        } catch (error) {
+          console.error(error);
+        }
+      } else {
+        setProfile(null);
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -103,7 +124,7 @@ function AuthProvider({ children }) {
     const nextProfile = await loadProfile(data.user);
     if (!nextProfile || nextProfile.role !== role) {
       await supabase.auth.signOut();
-      throw new Error(`This account is not registered as ${role}.`);
+      throw new Error(!nextProfile ? "Login succeeded, but no profile row exists for this user. Create/approve the profile in Supabase." : `This account is registered as ${nextProfile.role}, not ${role}.`);
     }
     if (role === "student" && nextProfile.status !== "approved") {
       await supabase.auth.signOut();
@@ -130,6 +151,7 @@ function useAuth() {
 
 function DataProvider({ children }) {
   const notify = useToast();
+  const { profile } = useAuth();
   const [profiles, setProfiles] = useState(demoProfiles);
   const [projects, setProjects] = useState(demoProjects);
   const [tasks, setTasks] = useState(demoTasks);
@@ -138,7 +160,7 @@ function DataProvider({ children }) {
   const [loading, setLoading] = useState(false);
 
   const refresh = async () => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || !profile) return;
     setLoading(true);
     const [p, pr, t, s, r] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
@@ -160,8 +182,16 @@ function DataProvider({ children }) {
   };
 
   useEffect(() => {
+    if (isSupabaseConfigured && !profile) {
+      setProfiles([]);
+      setProjects([]);
+      setTasks([]);
+      setSubmissions([]);
+      setRatings([]);
+      return;
+    }
     refresh();
-  }, []);
+  }, [profile?.id, profile?.role, profile?.status]);
 
   const upsertRow = async (table, row, setter) => {
     const payload = row.id ? row : { ...row, id: crypto.randomUUID() };
@@ -339,7 +369,7 @@ function PublicLanding() {
 }
 
 function LoginPage({ role }) {
-  const { signIn } = useAuth();
+  const { signIn, profile, loading: authLoading } = useAuth();
   const notify = useToast();
   const [form, setForm] = useState({ email: role === "admin" ? "admin@seotaskflow.com" : "s.jenkins@example.com", password: "" });
   const [loading, setLoading] = useState(false);
@@ -357,6 +387,12 @@ function LoginPage({ role }) {
     }
   };
   const isAdmin = role === "admin";
+  useEffect(() => {
+    if (!authLoading && profile?.role === role && (role === "admin" || profile.status === "approved")) {
+      navigate(role === "admin" ? "/admin/dashboard" : "/student/dashboard");
+    }
+  }, [authLoading, profile, role]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-container-low p-md antialiased">
       <div className={`w-full ${isAdmin ? "max-w-md" : "max-w-md rounded-xl border border-surface-variant bg-surface-container-lowest p-xl shadow-level-1"} relative overflow-hidden`}>
