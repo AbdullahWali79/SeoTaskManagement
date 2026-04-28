@@ -845,6 +845,7 @@ function Shell({ role, title, children }) {
   const path = usePath();
   const nav = role === "admin" ? [
     ["/admin/dashboard", "dashboard", "Dashboard"],
+    ["/admin/inbox", "inbox", "Review Inbox"],
     ["/admin/employees", "group", "Employees"],
     ["/admin/tasks", "assignment", "Task Management"],
     ["/admin/submissions", "send_and_archive", "Submissions"],
@@ -908,6 +909,10 @@ function Card({ title, value, meta, icon, accent = "text-on-surface" }) {
 function AdminDashboard() {
   const { profiles, tasks, ratings, submissions, loading } = useData();
   const employees = profiles.filter((p) => p.role === "employee");
+  const inboxCount = profiles.filter((p) => ["employee", "manager"].includes(p.role) && p.status === "pending").length
+    + tasks.filter((task) => task.final_forwarded_to_admin && task.status === "submitted").length
+    + submissions.filter((submission) => String(submission.status).toLowerCase() === "submitted").length
+    + tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase()) && task.payment_status !== "released").length;
   const avgRating = ratings.length ? (ratings.reduce((sum, r) => sum + Number(r.rating || 0), 0) / ratings.length).toFixed(1) : "0.0";
   return (
     <Shell role="admin" title="Dashboard Overview">
@@ -921,6 +926,13 @@ function AdminDashboard() {
           <Card title="In Progress" value={tasks.filter((t) => t.status === "in progress").length} meta="Currently active" accent="text-[#0052CC]" />
           <Card title="Average Rating" value={avgRating} meta="Quality score" icon="star" />
         </div>
+        <button className="flex w-full items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-lg text-left shadow-level-1 transition hover:bg-primary/10" onClick={() => navigate("/admin/inbox")} type="button">
+          <div>
+            <h3 className="text-h3 font-h3 text-primary">Admin Review Inbox</h3>
+            <p className="mt-1 text-body-md text-on-surface-variant">Employee requests, forwarded work, submissions, revisions, and pending payments in one place.</p>
+          </div>
+          <div className="flex items-center gap-sm rounded-full bg-primary px-md py-2 text-label-bold font-label-bold text-on-primary"><span>{inboxCount}</span><Icon>arrow_forward</Icon></div>
+        </button>
         <div className="grid grid-cols-1 gap-md lg:grid-cols-3">
           <div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 lg:col-span-2">
             <div className="mb-6 flex items-center justify-between"><h3 className="text-h3 font-h3">Weekly Performance Overview</h3><LinkButton to="/admin/reports" className="flex items-center text-label-bold font-label-bold text-primary">View Full Report <Icon className="ml-1 text-[16px]">arrow_forward</Icon></LinkButton></div>
@@ -939,6 +951,71 @@ function AdminDashboard() {
 function Activity({ submissions, tasks, profiles }) {
   const rows = submissions.slice(0, 6);
   return <div className="flex h-full flex-col rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="border-b border-outline-variant/50 p-lg"><h3 className="text-h3 font-h3">Recent Activity</h3></div><ul className="flex-1 divide-y divide-outline-variant/30">{rows.length ? rows.map((s) => { const task = tasks.find((t) => t.id === s.task_id); const student = profiles.find((p) => p.id === s.student_id); return <li key={s.id} className="flex gap-3 p-md hover:bg-surface-container-low"><div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700"><Icon className="text-[18px]">publish</Icon></div><div><p className="text-body-md"><b>{student?.full_name || "Student"}</b> submitted <span className="font-semibold text-primary">{task?.task_title}</span></p><div className="mt-1 flex items-center gap-2"><StatusBadge status={s.status} /><span className="text-body-sm text-outline">{new Date(s.submitted_at).toLocaleDateString()}</span></div></div></li>; }) : <li className="p-md"><EmptyState title="No activity yet" body="Submissions and reviews will appear here." /></li>}</ul></div>;
+}
+
+function AdminReviewInbox() {
+  const data = useData();
+  const notify = useToast();
+  const pendingPeople = data.profiles.filter((profile) => ["employee", "manager"].includes(profile.role) && profile.status === "pending");
+  const submittedTaskIds = new Set(data.submissions.map((submission) => submission.task_id));
+  const managerForwarded = data.tasks.filter((task) => task.final_forwarded_to_admin && String(task.status).toLowerCase() === "submitted");
+  const directSubmissions = data.submissions.filter((submission) => {
+    const task = data.tasks.find((item) => item.id === submission.task_id);
+    return String(submission.status).toLowerCase() === "submitted" && !task?.final_forwarded_to_admin;
+  });
+  const revisionReplies = data.submissions.filter((submission) => {
+    const task = data.tasks.find((item) => item.id === submission.task_id);
+    return String(task?.status).toLowerCase() === "revision required" || String(submission.status).toLowerCase() === "revision required";
+  });
+  const paymentsPending = data.tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase()) && task.payment_status !== "released");
+  const taskEmployee = (task) => data.profiles.find((profile) => profile.id === task?.student_id);
+  const taskProject = (task) => data.projects.find((project) => project.id === task?.project_id);
+  const approvePerson = async (person) => {
+    await data.updateProfile(person.id, { status: "approved", role: person.role === "student" ? "employee" : person.role });
+    notify(`${person.full_name || person.email} approved.`);
+  };
+  const rejectPerson = async (person) => {
+    await data.updateProfile(person.id, { status: "rejected" });
+    notify(`${person.full_name || person.email} rejected.`);
+  };
+  return (
+    <Shell role="admin" title="Admin Review Inbox">
+      <div className="mx-auto max-w-7xl space-y-lg">
+        <div className="grid grid-cols-1 gap-md md:grid-cols-5">
+          <Card title="New Requests" value={pendingPeople.length} meta="Employees/managers" icon="person_add" />
+          <Card title="Manager Forwarded" value={managerForwarded.length} meta="Ready for admin" icon="forward_to_inbox" />
+          <Card title="Submitted Tasks" value={directSubmissions.length} meta="Direct submissions" icon="publish" />
+          <Card title="Revision Replies" value={revisionReplies.length} meta="Need re-check" icon="rate_review" />
+          <Card title="Payments Pending" value={paymentsPending.length} meta="Approved work" icon="payments" />
+        </div>
+        <InboxSection title="New Employee Requests" icon="person_add" empty="No pending employee or manager requests.">
+          {pendingPeople.map((person) => <div className="grid grid-cols-1 items-center gap-md border-t border-outline-variant/30 p-md md:grid-cols-[1.5fr_1fr_1fr_auto]" key={person.id}><div><p className="font-semibold">{person.full_name || "Unnamed"}</p><p className="text-body-sm text-on-surface-variant">{person.email}</p></div><div className="text-body-sm">{person.phone || "-"}</div><StatusBadge status={person.status} /><div className="flex justify-end gap-sm"><button className="rounded-lg bg-secondary px-3 py-2 text-xs font-semibold text-white" onClick={() => approvePerson(person)} type="button">Approve</button><button className="rounded-lg bg-error px-3 py-2 text-xs font-semibold text-white" onClick={() => rejectPerson(person)} type="button">Reject</button></div></div>)}
+        </InboxSection>
+        <InboxSection title="Manager Forwarded Tasks" icon="forward_to_inbox" empty="No manager-forwarded tasks waiting for admin review.">
+          {managerForwarded.map((task) => <TaskInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={task.manager_remarks || "Manager forwarded for final admin review."} actionLabel="Review Work" />)}
+        </InboxSection>
+        <InboxSection title="Submitted Tasks" icon="publish" empty="No direct submitted tasks.">
+          {directSubmissions.map((submission) => { const task = data.tasks.find((item) => item.id === submission.task_id); return <TaskInboxRow key={submission.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={submission.notes || submission.submission_url || "Employee submitted work."} actionLabel="Review Submission" />; })}
+        </InboxSection>
+        <InboxSection title="Revision Replies" icon="rate_review" empty="No revision items currently waiting.">
+          {revisionReplies.map((submission) => { const task = data.tasks.find((item) => item.id === submission.task_id); return <TaskInboxRow key={submission.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={submission.notes || task?.manager_remarks || "Revision needs review."} actionLabel="Re-check" />; })}
+        </InboxSection>
+        <InboxSection title="Payments Pending" icon="payments" empty="No approved work waiting for payment.">
+          {paymentsPending.map((task) => <TaskInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={`Rs. ${Number(task.payment_amount || 0)} pending release`} actionLabel="Release Payment" />)}
+        </InboxSection>
+      </div>
+    </Shell>
+  );
+}
+
+function InboxSection({ title, icon, empty, children }) {
+  const items = React.Children.toArray(children).filter(Boolean);
+  return <section className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="flex items-center gap-sm border-b border-outline-variant/50 bg-surface-container-low px-lg py-md"><Icon className="text-primary">{icon}</Icon><h2 className="text-h3 font-h3">{title}</h2><span className="ml-auto rounded-full bg-surface px-sm py-1 text-label-bold font-label-bold text-on-surface-variant">{items.length}</span></div>{items.length ? <div>{items}</div> : <div className="p-lg"><EmptyState title={empty} body="New items will appear here automatically." /></div>}</section>;
+}
+
+function TaskInboxRow({ task, employee, project, note, actionLabel }) {
+  if (!task) return null;
+  return <div className="grid grid-cols-1 items-center gap-md border-t border-outline-variant/30 p-md md:grid-cols-[1.3fr_1fr_1fr_1.2fr_auto]"><div><button className="font-semibold text-primary" onClick={() => navigate(`/admin/tasks/${task.id}`)} type="button">{task.task_title}</button><p className="text-body-sm text-on-surface-variant">{task.task_type}</p></div><div><p>{employee?.full_name || "-"}</p><p className="text-body-sm text-on-surface-variant">{employee?.email || ""}</p></div><ProjectTag project={project} /><p className="line-clamp-2 text-body-sm text-on-surface-variant">{note}</p><div className="flex items-center justify-end gap-sm"><StatusBadge status={task.status} /><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/admin/tasks/${task.id}`)} type="button">{actionLabel}</button></div></div>;
 }
 
 function StudentsPage() {
@@ -1485,6 +1562,7 @@ function AppRouter() {
   if (path === "/employee/login" || path === "/student/login") return <LoginPage role="employee" />;
   if (path === "/employee/signup" || path === "/student/signup") return <SignupPage />;
   if (path === "/admin/dashboard") return <Guard role="admin"><AdminDashboard /></Guard>;
+  if (path === "/admin/inbox") return <Guard role="admin"><AdminReviewInbox /></Guard>;
   if (path === "/admin/employees" || path === "/admin/students") return <Guard role="admin"><StudentsPage /></Guard>;
   if (path === "/admin/tasks") return <Guard role="admin"><TasksPage /></Guard>;
   if (path.startsWith("/admin/tasks/")) return <Guard role="admin"><TaskDetail id={path.split("/").pop()} /></Guard>;
