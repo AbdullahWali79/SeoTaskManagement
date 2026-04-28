@@ -11,24 +11,31 @@ const priorities = ["Low", "Medium", "High", "Urgent"];
 
 const demoProfiles = [
   { id: "demo-admin", full_name: "Admin User", email: "admin@seotaskflow.com", phone: "+1 555 0100", role: "admin", status: "approved", skill_level: "expert", created_at: new Date().toISOString() },
-  { id: "demo-student-1", full_name: "Sarah Jenkins", email: "s.jenkins@example.com", phone: "+1 555 123 4567", role: "student", status: "approved", skill_level: "intermediate", created_at: new Date().toISOString() },
-  { id: "demo-student-2", full_name: "Marcus Chen", email: "m.chen@example.com", phone: "+1 555 987 6543", role: "student", status: "pending", skill_level: "beginner", created_at: new Date().toISOString() },
-  { id: "demo-student-3", full_name: "Elena Rodriguez", email: "elena.r@example.com", phone: "+1 555 444 3322", role: "student", status: "approved", skill_level: "expert", created_at: new Date().toISOString() }
+  { id: "demo-manager-1", full_name: "Ayesha Manager", email: "manager@example.com", phone: "+1 555 0101", role: "manager", status: "approved", skill_level: "expert", created_at: new Date().toISOString() },
+  { id: "demo-employee-1", full_name: "Sarah Jenkins", email: "s.jenkins@example.com", phone: "+1 555 123 4567", role: "employee", status: "approved", skill_level: "intermediate", created_at: new Date().toISOString() },
+  { id: "demo-employee-2", full_name: "Marcus Chen", email: "m.chen@example.com", phone: "+1 555 987 6543", role: "employee", status: "pending", skill_level: "beginner", created_at: new Date().toISOString() },
+  { id: "demo-employee-3", full_name: "Elena Rodriguez", email: "elena.r@example.com", phone: "+1 555 444 3322", role: "employee", status: "approved", skill_level: "expert", created_at: new Date().toISOString() }
 ];
 const demoProjects = [
   { id: "project-1", project_name: "SEO TaskFlow", website_url: "https://seotaskflow.com", category: "SaaS", notes: "Internal product SEO", created_at: new Date().toISOString() },
   { id: "project-2", project_name: "Client Growth Hub", website_url: "https://clientgrowth.example", category: "Agency", notes: "Monthly backlink campaign", created_at: new Date().toISOString() }
 ];
 const demoTasks = [
-  { id: "task-1", student_id: "demo-student-1", project_id: "project-1", task_title: "On-Page SEO Audit", task_type: "On-Page SEO", target_url: "https://seotaskflow.com/features", posting_url: "", instructions: "Audit titles, headings, schema and internal links.", approx_time: "2h", deadline: new Date(Date.now() + 86400000 * 3).toISOString(), priority: "High", status: "submitted", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: "task-2", student_id: "demo-student-1", project_id: "project-2", task_title: "Backlink Outreach", task_type: "Backlink", target_url: "https://clientgrowth.example/blog", posting_url: "", instructions: "Find relevant sites and submit outreach proof.", approx_time: "3h", deadline: new Date(Date.now() + 86400000 * 7).toISOString(), priority: "Medium", status: "in progress", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: "task-3", student_id: "demo-student-3", project_id: "project-1", task_title: "Keyword Research Q3", task_type: "Keyword Research", target_url: "https://seotaskflow.com", posting_url: "", instructions: "Build keyword clusters for product pages.", approx_time: "4h", deadline: new Date(Date.now() - 86400000).toISOString(), priority: "Urgent", status: "done", created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+  { id: "task-1", student_id: "demo-employee-1", manager_id: "demo-manager-1", assigned_by: "demo-admin", project_id: "project-1", task_title: "On-Page SEO Audit", task_type: "On-Page SEO", target_url: "https://seotaskflow.com/features", posting_url: "", instructions: "Audit titles, headings, schema and internal links.", approx_time: "2h", deadline: new Date(Date.now() + 86400000 * 3).toISOString(), priority: "High", status: "submitted", payment_amount: 2500, payment_status: "pending", progress_percent: 80, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: "task-2", student_id: "demo-employee-1", manager_id: "demo-manager-1", assigned_by: "demo-manager-1", project_id: "project-2", task_title: "Backlink Outreach", task_type: "Backlink", target_url: "https://clientgrowth.example/blog", posting_url: "", instructions: "Find relevant sites and submit outreach proof.", approx_time: "3h", deadline: new Date(Date.now() + 86400000 * 7).toISOString(), priority: "Medium", status: "in progress", payment_amount: 1800, payment_status: "pending", progress_percent: 45, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: "task-3", student_id: "demo-employee-3", manager_id: "", assigned_by: "demo-admin", project_id: "project-1", task_title: "Keyword Research Q3", task_type: "Keyword Research", target_url: "https://seotaskflow.com", posting_url: "", instructions: "Build keyword clusters for product pages.", approx_time: "4h", deadline: new Date(Date.now() - 86400000).toISOString(), priority: "Urgent", status: "done", payment_amount: 3200, payment_status: "released", progress_percent: 100, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
 ];
 const demoSubmissions = [
-  { id: "sub-1", task_id: "task-1", student_id: "demo-student-1", submission_url: "https://docs.example/audit", screenshot_url: "", notes: "Submitted audit with action list.", time_spent: "1h 45m", status: "submitted", submitted_at: new Date().toISOString() }
+  { id: "sub-1", task_id: "task-1", student_id: "demo-employee-1", submission_url: "https://docs.example/audit", screenshot_url: "", notes: "Submitted audit with action list.", time_spent: "1h 45m", status: "submitted", submitted_at: new Date().toISOString() }
 ];
 const demoRatings = [
-  { id: "rating-1", task_id: "task-3", student_id: "demo-student-3", rating: 5, remarks: "Excellent keyword grouping and intent notes.", created_at: new Date().toISOString() }
+  { id: "rating-1", task_id: "task-3", student_id: "demo-employee-3", rating: 5, remarks: "Excellent keyword grouping and intent notes.", created_at: new Date().toISOString() }
+];
+const demoProgressUpdates = [
+  { id: "progress-1", task_id: "task-2", employee_id: "demo-employee-1", progress_percent: 45, notes: "Completed outreach sheet and started submissions.", update_date: new Date().toISOString().slice(0, 10), created_at: new Date().toISOString() }
+];
+const demoPayments = [
+  { id: "payment-1", task_id: "task-3", employee_id: "demo-employee-3", released_by: "demo-admin", amount: 3200, method: "JazzCash", transaction_number: "JC-928811", screenshot_url: "", status: "released", released_at: new Date().toISOString() }
 ];
 
 const AuthContext = createContext(null);
@@ -121,7 +128,7 @@ function AuthProvider({ children }) {
   const signIn = async (email, password, role) => {
     if (!isSupabaseConfigured) {
       const found = demoProfiles.find((p) => p.email.toLowerCase() === email.toLowerCase() && p.role === role) || (role === "admin" ? demoProfiles[0] : demoProfiles[1]);
-      if (found.role === "student" && found.status !== "approved") throw new Error("Your account is still pending approval.");
+      if (["employee", "manager"].includes(found.role) && found.status !== "approved") throw new Error("Your account is still pending approval.");
       setProfile(found);
       return found;
     }
@@ -132,7 +139,7 @@ function AuthProvider({ children }) {
       await supabase.auth.signOut();
       throw new Error(!nextProfile ? "Login succeeded, but no profile row exists for this user. Create/approve the profile in Supabase." : `This account is registered as ${nextProfile.role}, not ${role}.`);
     }
-    if (role === "student" && nextProfile.status !== "approved") {
+    if (["employee", "manager"].includes(role) && nextProfile.status !== "approved") {
       await supabase.auth.signOut();
       throw new Error("Your account is still pending approval.");
     }
@@ -163,20 +170,24 @@ function DataProvider({ children }) {
   const [tasks, setTasks] = useState(demoTasks);
   const [submissions, setSubmissions] = useState(demoSubmissions);
   const [ratings, setRatings] = useState(demoRatings);
+  const [progressUpdates, setProgressUpdates] = useState(demoProgressUpdates);
+  const [payments, setPayments] = useState(demoPayments);
   const [loading, setLoading] = useState(false);
 
   const refresh = async () => {
     if (!isSupabaseConfigured || !profile) return;
     setLoading(true);
-    const [p, pr, t, s, r] = await Promise.all([
+    const [p, pr, t, s, r, u, pay] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
       supabase.from("submissions").select("*").order("submitted_at", { ascending: false }),
-      supabase.from("ratings").select("*").order("created_at", { ascending: false })
+      supabase.from("ratings").select("*").order("created_at", { ascending: false }),
+      supabase.from("task_progress_updates").select("*").order("created_at", { ascending: false }),
+      supabase.from("payments").select("*").order("released_at", { ascending: false })
     ]);
     setLoading(false);
-    if (p.error || pr.error || t.error || s.error || r.error) {
+    if (p.error || pr.error || t.error || s.error || r.error || u.error || pay.error) {
       notify("Could not load Supabase data. Check schema and RLS policies.", "error");
       return;
     }
@@ -185,6 +196,8 @@ function DataProvider({ children }) {
     setTasks(t.data || []);
     setSubmissions(s.data || []);
     setRatings(r.data || []);
+    setProgressUpdates(u.data || []);
+    setPayments(pay.data || []);
   };
 
   useEffect(() => {
@@ -194,6 +207,8 @@ function DataProvider({ children }) {
       setTasks([]);
       setSubmissions([]);
       setRatings([]);
+      setProgressUpdates([]);
+      setPayments([]);
       return;
     }
     refresh();
@@ -239,23 +254,39 @@ function DataProvider({ children }) {
     return urlData.publicUrl;
   };
 
+  const uploadPaymentProof = async (file, path) => {
+    if (!file) return "";
+    if (file.size > 102400) throw new Error("Payment proof image must be 100KB or less.");
+    if (!isSupabaseConfigured) return "";
+    const { data, error } = await supabase.storage.from("payment-proofs").upload(path, file, { upsert: true });
+    if (error) throw error;
+    const { data: urlData } = supabase.storage.from("payment-proofs").getPublicUrl(data.path);
+    return urlData.publicUrl;
+  };
+
   const value = {
     profiles,
     projects,
     tasks,
     submissions,
     ratings,
+    progressUpdates,
+    payments,
     loading,
     refresh,
     saveProject: (row) => upsertRow("projects", row, setProjects),
+    saveProfile: (row) => upsertRow("profiles", row, setProfiles),
     saveTask: (row) => upsertRow("tasks", { ...row, updated_at: new Date().toISOString() }, setTasks),
     saveSubmission: (row) => upsertRow("submissions", row, setSubmissions),
     saveRating: (row) => upsertRow("ratings", row, setRatings),
+    saveProgress: (row) => upsertRow("task_progress_updates", row, setProgressUpdates),
+    savePayment: (row) => upsertRow("payments", row, setPayments),
     deleteProject: (id) => deleteRow("projects", id, setProjects),
     deleteTask: (id) => deleteRow("tasks", id, setTasks),
     deleteProfile: (id) => deleteRow("profiles", id, setProfiles),
     updateStatus,
-    uploadScreenshot
+    uploadScreenshot,
+    uploadPaymentProof
   };
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
@@ -337,8 +368,8 @@ function PublicLanding() {
             <p className="max-w-xl text-body-lg font-body-lg text-on-surface-variant">A systematic platform for assigning SEO tasks, tracking submissions, and generating transparent reports for agencies and high-performance teams.</p>
             <div className="mt-sm flex flex-col gap-md sm:flex-row">
               <LinkButton to="/admin/login" className="flex items-center justify-center rounded-lg bg-primary px-lg py-3 text-body-md font-body-md text-on-primary shadow-sm transition-shadow hover:bg-primary/90 hover:shadow-md">Admin Login</LinkButton>
-              <LinkButton to="/student/login" className="flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest px-lg py-3 text-body-md font-body-md text-on-surface transition-colors hover:bg-surface-container-low">Student Login</LinkButton>
-              <LinkButton to="/student/signup" className="flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-low px-lg py-3 text-body-md font-body-md text-on-surface transition-colors hover:bg-surface-container">Join as Student</LinkButton>
+              <LinkButton to="/employee/login" className="flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest px-lg py-3 text-body-md font-body-md text-on-surface transition-colors hover:bg-surface-container-low">Employee Login</LinkButton>
+              <LinkButton to="/employee/signup" className="flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-low px-lg py-3 text-body-md font-body-md text-on-surface transition-colors hover:bg-surface-container">Join as Employee</LinkButton>
             </div>
           </div>
           <HeroDashboardPreview stats={{ done: doneCount, review: reviewCount, pending: pendingCount }} />
@@ -432,7 +463,8 @@ function HeroDashboardPreview({ stats }) {
 function LoginPage({ role }) {
   const { signIn, profile, loading: authLoading } = useAuth();
   const notify = useToast();
-  const [form, setForm] = useState({ email: role === "admin" ? "admin@seotaskflow.com" : "s.jenkins@example.com", password: "" });
+  const roleLabel = role === "admin" ? "Admin" : role === "manager" ? "Manager" : "Employee";
+  const [form, setForm] = useState({ email: role === "admin" ? "admin@seotaskflow.com" : role === "manager" ? "manager@example.com" : "s.jenkins@example.com", password: "" });
   const [loading, setLoading] = useState(false);
   const submit = async (event) => {
     event.preventDefault();
@@ -440,7 +472,7 @@ function LoginPage({ role }) {
     try {
       const profile = await signIn(form.email, form.password, role);
       notify(`Logged in as ${profile.full_name || profile.email}`);
-      navigate(role === "admin" ? "/admin/dashboard" : "/student/dashboard");
+      navigate(role === "admin" ? "/admin/dashboard" : role === "manager" ? "/manager/dashboard" : "/employee/dashboard");
     } catch (error) {
       notify(error.message, "error");
     } finally {
@@ -450,7 +482,7 @@ function LoginPage({ role }) {
   const isAdmin = role === "admin";
   useEffect(() => {
     if (!authLoading && profile?.role === role && (role === "admin" || profile.status === "approved")) {
-      navigate(role === "admin" ? "/admin/dashboard" : "/student/dashboard");
+      navigate(role === "admin" ? "/admin/dashboard" : role === "manager" ? "/manager/dashboard" : "/employee/dashboard");
     }
   }, [authLoading, profile, role]);
 
@@ -464,19 +496,19 @@ function LoginPage({ role }) {
             {!isAdmin && <span className="text-h3 font-h3 tracking-tight">SEO TaskFlow</span>}
           </div>
           {isAdmin && <h1 className="text-h1 font-black tracking-tighter text-primary">SEO TaskFlow</h1>}
-          <p className="mt-xs text-body-md text-on-surface-variant">{isAdmin ? "Enterprise Admin Portal" : "Sign in to manage your assignments and submissions."}</p>
+          <p className="mt-xs text-body-md text-on-surface-variant">{isAdmin ? "Enterprise Admin Portal" : `Sign in to manage your ${roleLabel.toLowerCase()} assignments and submissions.`}</p>
         </div>
         <div className={isAdmin ? "w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-xl shadow-level-1" : ""}>
-          <div className="mb-lg"><h2 className="text-h3 font-h3 text-on-surface">{isAdmin ? "Sign In" : "Student Portal"}</h2><p className="mt-xs text-body-sm text-on-surface-variant">Enter your credentials to continue.</p></div>
+          <div className="mb-lg"><h2 className="text-h3 font-h3 text-on-surface">{isAdmin ? "Sign In" : `${roleLabel} Portal`}</h2><p className="mt-xs text-body-sm text-on-surface-variant">Enter your credentials to continue.</p></div>
           <form className="flex flex-col gap-md" onSubmit={submit}>
             <Field label="Email Address" icon="mail" type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} placeholder={`${role}@example.com`} />
             <Field label="Password" icon="lock" type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} placeholder="••••••••" />
             <button className="mt-sm flex w-full items-center justify-center gap-sm rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-on-primary shadow-sm transition-all hover:bg-primary-fixed-variant disabled:opacity-60" disabled={loading} type="submit">
-              {loading ? "Signing in..." : `Login as ${isAdmin ? "Admin" : "Student"}`} <Icon className="text-lg">arrow_forward</Icon>
+              {loading ? "Signing in..." : `Login as ${roleLabel}`} <Icon className="text-lg">arrow_forward</Icon>
             </button>
           </form>
           <div className="mt-xl border-t border-outline-variant/30 pt-lg text-center">
-            {isAdmin ? <p className="text-body-sm text-on-surface-variant">Not an administrator? <LinkButton to="/student/login" className="ml-xs text-label-bold font-label-bold text-primary">Login as Student</LinkButton></p> : <div className="flex flex-col gap-md"><LinkButton to="/student/signup" className="text-body-sm text-on-surface-variant hover:text-primary">Join as Student (Request Access)</LinkButton><LinkButton to="/admin/login" className="text-body-sm text-on-surface-variant hover:text-secondary">Login as Admin</LinkButton></div>}
+            {isAdmin ? <p className="text-body-sm text-on-surface-variant">Not an administrator? <LinkButton to="/employee/login" className="ml-xs text-label-bold font-label-bold text-primary">Login as Employee</LinkButton></p> : <div className="flex flex-col gap-md"><LinkButton to="/employee/signup" className="text-body-sm text-on-surface-variant hover:text-primary">Join as Employee (Request Access)</LinkButton><LinkButton to="/manager/login" className="text-body-sm text-on-surface-variant hover:text-primary">Login as Manager</LinkButton><LinkButton to="/admin/login" className="text-body-sm text-on-surface-variant hover:text-secondary">Login as Admin</LinkButton></div>}
           </div>
         </div>
       </div>
@@ -524,17 +556,17 @@ function SelectField({ label, value, onChange, options }) {
   );
 }
 
-function StudentSearchField({ students, value, onChange }) {
-  const selected = students.find((student) => student.id === value);
+function PersonSearchField({ people, value, onChange, label = "Assign Active Employee", placeholder = "Type employee name or email..." }) {
+  const selected = people.find((student) => student.id === value);
   const [query, setQuery] = useState(selected?.full_name || "");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const nextSelected = students.find((student) => student.id === value);
+    const nextSelected = people.find((student) => student.id === value);
     setQuery(nextSelected?.full_name || "");
-  }, [value, students]);
+  }, [value, people]);
 
-  const filteredStudents = students
+  const filteredStudents = people
     .filter((student) => {
       const search = `${student.full_name || ""} ${student.email || ""}`.toLowerCase();
       return search.includes(query.toLowerCase());
@@ -543,7 +575,7 @@ function StudentSearchField({ students, value, onChange }) {
 
   return (
     <label className="relative flex flex-col gap-xs">
-      <span className="text-label-bold font-label-bold text-on-surface">Assign Active Student</span>
+      <span className="text-label-bold font-label-bold text-on-surface">{label}</span>
       <span className="relative flex items-center">
         <Icon className="absolute left-md text-[18px] text-outline">person_search</Icon>
         <input
@@ -555,7 +587,7 @@ function StudentSearchField({ students, value, onChange }) {
             if (!event.target.value) onChange("");
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Type student name or email..."
+          placeholder={placeholder}
           required
           value={query}
         />
@@ -583,7 +615,7 @@ function StudentSearchField({ students, value, onChange }) {
               </button>
             ))
           ) : (
-            <div className="px-md py-3 text-body-sm text-on-surface-variant">No active students found.</div>
+            <div className="px-md py-3 text-body-sm text-on-surface-variant">No active records found.</div>
           )}
         </div>
       )}
@@ -676,7 +708,7 @@ function SignupPage() {
               phone: form.phone,
               skill_level: form.skill_level,
               message: form.message,
-              role: "student",
+              role: "employee",
               status: "pending"
             }
           }
@@ -685,12 +717,12 @@ function SignupPage() {
         const userId = data.user?.id;
         if (userId && data.session) {
           const { password: _password, ...profileFields } = form;
-          const { error: profileError } = await supabase.from("profiles").upsert({ id: userId, ...profileFields, role: "student", status: "pending", created_at: new Date().toISOString() });
+          const { error: profileError } = await supabase.from("profiles").upsert({ id: userId, ...profileFields, role: "employee", status: "pending", created_at: new Date().toISOString() });
           if (profileError) throw profileError;
         }
       }
-      notify("Signup request submitted. Admin approval is required before login.");
-      navigate("/student/login");
+      notify("Employee request submitted. Admin approval is required before login.");
+      navigate("/employee/login");
     } catch (error) {
       notify(error.message, "error");
     } finally {
@@ -705,11 +737,11 @@ function SignupPage() {
           <div className="relative z-10">
             <div className="mb-3xl flex items-center gap-sm"><Icon className="text-[32px]">analytics</Icon><span className="text-h3 font-h3 tracking-tight">SEO TaskFlow</span></div>
             <h2 className="mb-md text-h1 font-h1">Master Your Workflow.</h2>
-            <p className="max-w-sm text-body-lg text-on-primary-container opacity-90">Join the systematic platform designed for high-performance SEO agencies and professionals.</p>
+            <p className="max-w-sm text-body-lg text-on-primary-container opacity-90">Join the systematic platform designed for high-performance SEO teams and employees.</p>
           </div>
         </div>
         <div className="flex w-full flex-col justify-center p-lg sm:p-xl md:w-7/12 md:p-2xl">
-          <div className="mb-xl"><h1 className="mb-xs text-h2 font-h2 text-on-surface">Student Signup Request</h1><p className="text-body-md text-on-surface-variant">Submit your details to request access to the student environment.</p></div>
+          <div className="mb-xl"><h1 className="mb-xs text-h2 font-h2 text-on-surface">Employee Signup Request</h1><p className="text-body-md text-on-surface-variant">Submit your details to request access to the employee environment.</p></div>
           <form className="space-y-md" onSubmit={submit}>
             <Field label="Full Name" value={form.full_name} onChange={(full_name) => setForm({ ...form, full_name })} placeholder="Jane Doe" />
             <div className="grid grid-cols-1 gap-md sm:grid-cols-2">
@@ -721,7 +753,7 @@ function SignupPage() {
             <label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Message</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Briefly describe your goals..." /></label>
             <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary shadow-sm transition-all hover:bg-primary-fixed-variant disabled:opacity-60" disabled={loading} type="submit">{loading ? "Submitting..." : "Submit Request"} <Icon className="text-[18px]">arrow_forward</Icon></button>
           </form>
-          <div className="mt-xl border-t border-outline-variant/30 pt-lg text-center"><p className="text-body-md text-on-surface-variant">Already have an account? <LinkButton to="/student/login" className="ml-1 text-label-bold font-label-bold text-primary">Login</LinkButton></p></div>
+          <div className="mt-xl border-t border-outline-variant/30 pt-lg text-center"><p className="text-body-md text-on-surface-variant">Already have an account? <LinkButton to="/employee/login" className="ml-1 text-label-bold font-label-bold text-primary">Login</LinkButton></p></div>
         </div>
       </div>
     </div>
@@ -733,24 +765,29 @@ function Shell({ role, title, children }) {
   const path = usePath();
   const nav = role === "admin" ? [
     ["/admin/dashboard", "dashboard", "Dashboard"],
-    ["/admin/students", "group", "Students"],
+    ["/admin/employees", "group", "Employees"],
     ["/admin/tasks", "assignment", "Task Management"],
     ["/admin/submissions", "send_and_archive", "Submissions"],
     ["/admin/projects", "language", "Projects/Websites"],
     ["/admin/reports", "analytics", "Reports"],
     ["/admin/settings", "settings", "Settings"]
+  ] : role === "manager" ? [
+    ["/manager/dashboard", "dashboard", "Dashboard"],
+    ["/manager/tasks", "assignment", "Team Tasks"],
+    ["/manager/submissions", "send_and_archive", "Submissions"],
+    ["/manager/settings", "settings", "Settings"]
   ] : [
-    ["/student/dashboard", "dashboard", "Dashboard"],
-    ["/student/tasks", "assignment", "My Tasks"],
-    ["/student/performance", "trending_up", "Performance"],
-    ["/student/settings", "settings", "Settings"]
+    ["/employee/dashboard", "dashboard", "Dashboard"],
+    ["/employee/tasks", "assignment", "My Tasks"],
+    ["/employee/performance", "trending_up", "Performance"],
+    ["/employee/settings", "settings", "Settings"]
   ];
   return (
     <div className="flex h-screen overflow-hidden bg-background text-on-surface">
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-slate-200 bg-slate-50 py-4 md:flex">
         <div className="mb-8 flex items-center gap-3 px-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-700 text-lg font-bold text-white">S</div>
-          <div><h1 className="text-lg font-black tracking-tighter text-blue-700">SEO TaskFlow</h1><p className="text-body-sm text-slate-500">{role === "admin" ? "Enterprise Admin" : "Student Portal"}</p></div>
+          <div><h1 className="text-lg font-black tracking-tighter text-blue-700">SEO TaskFlow</h1><p className="text-body-sm text-slate-500">{role === "admin" ? "Enterprise Admin" : role === "manager" ? "Manager Portal" : "Employee Portal"}</p></div>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-4">
           {nav.map(([to, icon, label]) => {
@@ -765,7 +802,7 @@ function Shell({ role, title, children }) {
       </aside>
       <main className="flex h-screen flex-1 flex-col overflow-hidden md:ml-64">
         <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
-          <div className="flex items-center gap-3"><button className="md:hidden" onClick={() => navigate(role === "admin" ? "/admin/dashboard" : "/student/dashboard")}><Icon>menu</Icon></button><h2 className="text-h2 font-h2 text-on-surface">{title}</h2></div>
+          <div className="flex items-center gap-3"><button className="md:hidden" onClick={() => navigate(role === "admin" ? "/admin/dashboard" : role === "manager" ? "/manager/dashboard" : "/employee/dashboard")}><Icon>menu</Icon></button><h2 className="text-h2 font-h2 text-on-surface">{title}</h2></div>
           <div className="flex items-center gap-4"><button className="relative rounded-full p-2 text-slate-500 hover:bg-slate-50"><Icon>notifications</Icon><span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-error" /></button><div className="flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant bg-surface-container-high text-sm font-bold">{(profile?.full_name || "U").slice(0, 2).toUpperCase()}</div></div>
         </header>
         <div className="flex-1 overflow-y-auto p-lg">{children}</div>
@@ -777,8 +814,8 @@ function Shell({ role, title, children }) {
 function Guard({ role, children }) {
   const { profile, loading } = useAuth();
   if (loading) return <div className="min-h-screen bg-background"><LoadingBar show /><div className="p-xl">Loading...</div></div>;
-  if (!profile || profile.role !== role || (role === "student" && profile.status !== "approved")) {
-    navigate(role === "admin" ? "/admin/login" : "/student/login");
+  if (!profile || profile.role !== role || (["employee", "manager"].includes(role) && profile.status !== "approved")) {
+    navigate(role === "admin" ? "/admin/login" : role === "manager" ? "/manager/login" : "/employee/login");
     return null;
   }
   return children;
@@ -790,15 +827,15 @@ function Card({ title, value, meta, icon, accent = "text-on-surface" }) {
 
 function AdminDashboard() {
   const { profiles, tasks, ratings, submissions, loading } = useData();
-  const students = profiles.filter((p) => p.role === "student");
+  const employees = profiles.filter((p) => p.role === "employee");
   const avgRating = ratings.length ? (ratings.reduce((sum, r) => sum + Number(r.rating || 0), 0) / ratings.length).toFixed(1) : "0.0";
   return (
     <Shell role="admin" title="Dashboard Overview">
       <LoadingBar show={loading} />
       <div className="mx-auto max-w-7xl space-y-lg">
         <div className="grid grid-cols-1 gap-md md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          <Card title="Total Students" value={students.length} meta="+ active cohort" icon="trending_up" />
-          <Card title="Pending Approvals" value={students.filter((p) => p.status === "pending").length} meta="Action needed" icon="pending_actions" />
+          <Card title="Total Employees" value={employees.length} meta="+ active team" icon="trending_up" />
+          <Card title="Pending Approvals" value={employees.filter((p) => p.status === "pending").length} meta="Action needed" icon="pending_actions" />
           <Card title="Total Tasks" value={tasks.length} meta="Across all projects" icon="assignment" />
           <Card title="Completed Tasks" value={tasks.filter((t) => ["done", "approved"].includes(t.status)).length} meta="Approved or done" accent="text-[#36B37E]" />
           <Card title="In Progress" value={tasks.filter((t) => t.status === "in progress").length} meta="Currently active" accent="text-[#0052CC]" />
@@ -827,12 +864,16 @@ function Activity({ submissions, tasks, profiles }) {
 function StudentsPage() {
   const data = useData();
   const notify = useToast();
-  const students = data.profiles.filter((p) => p.role === "student");
+  const employees = data.profiles.filter((p) => ["employee", "manager"].includes(p.role));
   const approve = async (student, status) => { await data.updateStatus("profiles", student.id, status); notify(`${student.full_name} marked ${status}.`); };
+  const setRole = async (person, role) => {
+    await data.saveProfile({ ...person, role });
+    notify(`${person.full_name} is now ${role}.`);
+  };
   return (
-    <Shell role="admin" title="Students">
-      <div className="mb-lg flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h1 className="text-h1 font-h1">Students</h1><p className="mt-1 text-body-md text-on-surface-variant">Manage enrolled SEO students, track progress, and review submissions.</p></div><button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-bold font-label-bold text-on-primary shadow-sm"><Icon className="text-[18px]">add</Icon>Add Student</button></div>
-      <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Student Name</th><th>Contact Info</th><th>Status</th><th>Task Progress</th><th>Avg Rating</th><th className="text-right">Actions</th></tr></thead><tbody>{students.map((student) => { const studentTasks = data.tasks.filter((t) => t.student_id === student.id); const done = studentTasks.filter((t) => ["done", "approved"].includes(t.status)).length; const studentRatings = data.ratings.filter((r) => r.student_id === student.id); const avg = studentRatings.length ? (studentRatings.reduce((s, r) => s + Number(r.rating), 0) / studentRatings.length).toFixed(1) : "-"; return <tr key={student.id}><td><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/50 bg-surface-container font-bold text-primary">{student.full_name?.slice(0, 2).toUpperCase()}</div><div><div className="font-semibold">{student.full_name}</div><div className="text-body-sm text-on-surface-variant">ID: {student.id.slice(0, 8)}</div></div></div></td><td><div className="text-body-sm"><div className="flex items-center gap-1.5"><Icon className="text-[14px] text-on-surface-variant">mail</Icon>{student.email}</div><div className="flex items-center gap-1.5 text-on-surface-variant"><Icon className="text-[14px]">phone</Icon>{student.phone || "-"}</div></div></td><td><StatusBadge status={student.status === "approved" ? "active" : student.status} /></td><td><div className="max-w-[160px]"><div className="mb-2 flex justify-between text-body-sm"><span className="font-medium">{done} / {studentTasks.length}</span><span className="text-on-surface-variant">{studentTasks.length ? Math.round((done / studentTasks.length) * 100) : 0}%</span></div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-secondary" style={{ width: `${studentTasks.length ? (done / studentTasks.length) * 100 : 0}%` }} /></div></div></td><td><div className="flex items-center gap-1 font-semibold"><Icon className="text-[16px] text-tertiary-container">star</Icon>{avg}</div></td><td className="text-right"><div className="flex justify-end gap-1"><button title="Approve" className="rounded-md p-1.5 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary" onClick={() => approve(student, "approved")}><Icon className="text-[20px]">check_circle</Icon></button><button title="Reject" className="rounded-md p-1.5 text-on-surface-variant hover:bg-error/10 hover:text-error" onClick={() => approve(student, "rejected")}><Icon className="text-[20px]">cancel</Icon></button><button title="Delete" className="rounded-md p-1.5 text-on-surface-variant hover:bg-surface-container" onClick={() => data.deleteProfile(student.id)}><Icon className="text-[20px]">delete</Icon></button></div></td></tr>; })}</tbody></table></div>{!students.length && <div className="p-lg"><EmptyState title="No students found" body="Signup requests will appear here for approval." /></div>}</div>
+    <Shell role="admin" title="Employees">
+      <div className="mb-lg flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h1 className="text-h1 font-h1">Employees</h1><p className="mt-1 text-body-md text-on-surface-variant">Manage employees, promote managers, track progress, and review submissions.</p></div><button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-bold font-label-bold text-on-primary shadow-sm"><Icon className="text-[18px]">add</Icon>Add Employee</button></div>
+      <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Employee Name</th><th>Contact Info</th><th>Role</th><th>Status</th><th>Task Progress</th><th>Avg Rating</th><th className="text-right">Actions</th></tr></thead><tbody>{employees.map((student) => { const studentTasks = data.tasks.filter((t) => t.student_id === student.id || t.manager_id === student.id); const done = studentTasks.filter((t) => ["done", "approved"].includes(t.status)).length; const studentRatings = data.ratings.filter((r) => r.student_id === student.id); const avg = studentRatings.length ? (studentRatings.reduce((s, r) => s + Number(r.rating), 0) / studentRatings.length).toFixed(1) : "-"; return <tr key={student.id}><td><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/50 bg-surface-container font-bold text-primary">{student.full_name?.slice(0, 2).toUpperCase()}</div><div><div className="font-semibold">{student.full_name}</div><div className="text-body-sm text-on-surface-variant">ID: {student.id.slice(0, 8)}</div></div></div></td><td><div className="text-body-sm"><div className="flex items-center gap-1.5"><Icon className="text-[14px] text-on-surface-variant">mail</Icon>{student.email}</div><div className="flex items-center gap-1.5 text-on-surface-variant"><Icon className="text-[14px]">phone</Icon>{student.phone || "-"}</div></div></td><td><span className="capitalize">{student.role}</span></td><td><StatusBadge status={student.status === "approved" ? "active" : student.status} /></td><td><div className="max-w-[160px]"><div className="mb-2 flex justify-between text-body-sm"><span className="font-medium">{done} / {studentTasks.length}</span><span className="text-on-surface-variant">{studentTasks.length ? Math.round((done / studentTasks.length) * 100) : 0}%</span></div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-secondary" style={{ width: `${studentTasks.length ? (done / studentTasks.length) * 100 : 0}%` }} /></div></div></td><td><div className="flex items-center gap-1 font-semibold"><Icon className="text-[16px] text-tertiary-container">star</Icon>{avg}</div></td><td className="text-right"><div className="flex justify-end gap-1"><button title="Approve" className="rounded-md p-1.5 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary" onClick={() => approve(student, "approved")}><Icon className="text-[20px]">check_circle</Icon></button><button title="Make Manager" className="rounded-md p-1.5 text-on-surface-variant hover:bg-primary/10 hover:text-primary" onClick={() => setRole(student, student.role === "manager" ? "employee" : "manager")}><Icon className="text-[20px]">supervisor_account</Icon></button><button title="Reject" className="rounded-md p-1.5 text-on-surface-variant hover:bg-error/10 hover:text-error" onClick={() => approve(student, "rejected")}><Icon className="text-[20px]">cancel</Icon></button><button title="Delete" className="rounded-md p-1.5 text-on-surface-variant hover:bg-surface-container" onClick={() => data.deleteProfile(student.id)}><Icon className="text-[20px]">delete</Icon></button></div></td></tr>; })}</tbody></table></div>{!employees.length && <div className="p-lg"><EmptyState title="No employees found" body="Signup requests will appear here for approval." /></div>}</div>
     </Shell>
   );
 }
@@ -848,11 +889,27 @@ function ProjectsPage() {
   return <Shell role="admin" title="Projects/Websites"><div className="space-y-lg"><ProjectForm onSave={async (row) => { await data.saveProject(row); notify("Project saved."); }} /><div className="grid grid-cols-1 gap-md md:grid-cols-2 xl:grid-cols-3">{data.projects.map((project) => <div key={project.id} className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><div className="mb-md flex items-start justify-between"><ProjectTag project={project} /><button onClick={() => data.deleteProject(project.id)}><Icon className="text-error">delete</Icon></button></div><h3 className="text-h3 font-h3">{project.project_name}</h3><a className="mt-1 block break-all text-body-sm text-primary" href={project.website_url} target="_blank" rel="noreferrer">{project.website_url}</a><p className="mt-md text-body-md text-on-surface-variant">{project.notes}</p></div>)}</div></div></Shell>;
 }
 
-function TaskForm({ initial = {}, onSave }) {
+function TaskForm({ initial = {}, onSave, managerMode = false }) {
   const { profiles, projects } = useData();
-  const students = profiles.filter((p) => p.role === "student" && p.status === "approved");
+  const { profile } = useAuth();
+  const employees = profiles.filter((p) => p.role === "employee" && p.status === "approved");
+  const managers = profiles.filter((p) => p.role === "manager" && p.status === "approved");
   const [form, setForm] = useState({ priority: "Medium", status: "pending", ...initial });
-  return <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={(e) => { e.preventDefault(); onSave({ ...form, created_at: form.created_at || new Date().toISOString() }); setForm({ priority: "Medium", status: "pending" }); }}><Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} /><SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} /><StudentSearchField students={students} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} /><ProjectSearchField projects={projects} value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} /><Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} /><Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} /><Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} /><Field label="Deadline" type="datetime-local" value={form.deadline?.slice(0, 16)} onChange={(deadline) => setForm({ ...form, deadline: new Date(deadline).toISOString() })} /><SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} /><SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} /><label className="md:col-span-2 flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Instructions</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={form.instructions || ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })} /></label><button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Task</button></form>;
+  const submitTask = (event) => {
+    event.preventDefault();
+    const payload = {
+      ...form,
+      manager_id: managerMode ? profile.id : form.manager_id,
+      assigned_by: profile.id,
+      progress_percent: Number(form.progress_percent || 0),
+      payment_amount: Number(form.payment_amount || 0),
+      payment_status: form.payment_status || "pending",
+      created_at: form.created_at || new Date().toISOString()
+    };
+    onSave(payload);
+    setForm({ priority: "Medium", status: "pending" });
+  };
+  return <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={submitTask}><Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} /><SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} /><PersonSearchField people={employees} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} />{!managerMode && <PersonSearchField people={managers} value={form.manager_id} onChange={(manager_id) => setForm({ ...form, manager_id })} label="Assign Manager (Optional)" placeholder="Type manager name or email..." />}<ProjectSearchField projects={projects} value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} /><Field label="Payment Amount" type="number" value={form.payment_amount} onChange={(payment_amount) => setForm({ ...form, payment_amount })} required={false} /><Field label="Week Start" type="date" value={form.week_start || ""} onChange={(week_start) => setForm({ ...form, week_start })} required={false} /><Field label="Week End" type="date" value={form.week_end || ""} onChange={(week_end) => setForm({ ...form, week_end })} required={false} /><Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} /><Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} /><Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} /><Field label="Deadline" type="datetime-local" value={form.deadline?.slice(0, 16)} onChange={(deadline) => setForm({ ...form, deadline: new Date(deadline).toISOString() })} /><SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} /><SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} /><label className="md:col-span-2 flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Instructions</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={form.instructions || ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })} /></label><button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Weekly Task</button></form>;
 }
 
 function TasksPage() {
@@ -864,18 +921,21 @@ function TasksPage() {
 function TasksTable({ studentId, admin = false }) {
   const data = useData();
   const notify = useToast();
-  const rows = data.tasks.filter((task) => !studentId || task.student_id === studentId);
+  const { profile } = useAuth();
+  const rows = data.tasks.filter((task) => !studentId || task.student_id === studentId || task.manager_id === studentId);
   if (!rows.length) return <EmptyState title="No tasks found" body="Assigned SEO tasks will appear here." />;
-  return <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Task</th><th>Student</th><th>Website</th><th>Deadline</th><th>Priority</th><th>Status</th><th className="text-right">Actions</th></tr></thead><tbody>{rows.map((task) => { const project = data.projects.find((p) => p.id === task.project_id); const student = data.profiles.find((p) => p.id === task.student_id); return <tr key={task.id}><td><button className="font-semibold text-primary" onClick={() => navigate(admin ? `/admin/tasks/${task.id}` : `/student/tasks/${task.id}`)}>{task.task_title}</button><div className="text-body-sm text-on-surface-variant">{task.task_type}</div></td><td>{student?.full_name || "-"}</td><td><ProjectTag project={project} /></td><td>{task.deadline ? new Date(task.deadline).toLocaleDateString() : "-"}</td><td>{task.priority}</td><td><StatusBadge status={task.status} /></td><td className="text-right">{admin ? <div className="flex justify-end gap-1"><button onClick={async () => { await data.updateStatus("tasks", task.id, "in progress"); notify("Task status updated."); }}><Icon>play_arrow</Icon></button><button onClick={() => data.deleteTask(task.id)}><Icon className="text-error">delete</Icon></button></div> : <button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/student/tasks/${task.id}`)}>Open</button>}</td></tr>; })}</tbody></table></div></div>;
+  return <div className="overflow-hidden rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Task</th><th>Employee</th><th>Manager</th><th>Website</th><th>Progress</th><th>Payment</th><th>Status</th><th className="text-right">Actions</th></tr></thead><tbody>{rows.map((task) => { const project = data.projects.find((p) => p.id === task.project_id); const student = data.profiles.find((p) => p.id === task.student_id); const manager = data.profiles.find((p) => p.id === task.manager_id); const openPath = profile.role === "admin" ? `/admin/tasks/${task.id}` : profile.role === "manager" ? `/manager/tasks/${task.id}` : `/employee/tasks/${task.id}`; return <tr key={task.id}><td><button className="font-semibold text-primary" onClick={() => navigate(openPath)}>{task.task_title}</button><div className="text-body-sm text-on-surface-variant">{task.task_type}</div></td><td>{student?.full_name || "-"}</td><td>{manager?.full_name || "-"}</td><td><ProjectTag project={project} /></td><td><div className="min-w-[120px]"><div className="mb-1 flex justify-between text-body-sm"><span>{Number(task.progress_percent || 0)}%</span></div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-primary" style={{ width: `${Number(task.progress_percent || 0)}%` }} /></div></div></td><td><div className="text-body-sm"><div>Rs. {Number(task.payment_amount || 0)}</div><StatusBadge status={task.payment_status === "released" ? "approved" : "pending"} /></div></td><td><StatusBadge status={task.status} /></td><td className="text-right">{admin || profile.role === "manager" ? <div className="flex justify-end gap-1"><button onClick={async () => { await data.updateStatus("tasks", task.id, "in progress"); notify("Task status updated."); }}><Icon>play_arrow</Icon></button>{profile.role === "admin" && <button onClick={() => data.deleteTask(task.id)}><Icon className="text-error">delete</Icon></button>}</div> : <button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(openPath)}>Open</button>}</td></tr>; })}</tbody></table></div></div>;
 }
 
 function TaskDetail({ id, studentMode = false }) {
   const data = useData();
   const task = data.tasks.find((t) => t.id === id);
   const notify = useToast();
-  if (!task) return <Shell role={studentMode ? "student" : "admin"} title="Task Detail"><EmptyState title="Task not found" body="The selected task does not exist." /></Shell>;
+  const { profile } = useAuth();
+  const shellRole = profile?.role || (studentMode ? "employee" : "admin");
+  if (!task) return <Shell role={shellRole} title="Task Detail"><EmptyState title="Task not found" body="The selected task does not exist." /></Shell>;
   const project = data.projects.find((p) => p.id === task.project_id);
-  return <Shell role={studentMode ? "student" : "admin"} title="Task Detail"><div className="grid grid-cols-1 gap-lg lg:grid-cols-3"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 lg:col-span-2"><div className="mb-md flex items-start justify-between gap-3"><div><h1 className="text-h1 font-h1">{task.task_title}</h1><p className="mt-1 text-body-md text-on-surface-variant">{task.task_type}</p></div><StatusBadge status={task.status} /></div><div className="grid grid-cols-1 gap-md md:grid-cols-2"><Info label="Project" value={<ProjectTag project={project} />} /><Info label="Target URL" value={task.target_url} /><Info label="Posting URL" value={task.posting_url || "-"} /><Info label="Approx Time" value={task.approx_time} /><Info label="Deadline" value={task.deadline ? new Date(task.deadline).toLocaleString() : "-"} /><Info label="Priority" value={task.priority} /></div><div className="mt-lg"><h3 className="mb-sm text-h3 font-h3">Instructions</h3><p className="whitespace-pre-line rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">{task.instructions}</p></div></div><div>{studentMode ? <SubmitTask task={task} /> : <AdminReviewPanel task={task} />}</div></div></Shell>;
+  return <Shell role={shellRole} title="Task Detail"><div className="grid grid-cols-1 gap-lg lg:grid-cols-3"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 lg:col-span-2"><div className="mb-md flex items-start justify-between gap-3"><div><h1 className="text-h1 font-h1">{task.task_title}</h1><p className="mt-1 text-body-md text-on-surface-variant">{task.task_type}</p></div><StatusBadge status={task.status} /></div><div className="grid grid-cols-1 gap-md md:grid-cols-2"><Info label="Project" value={<ProjectTag project={project} />} /><Info label="Target URL" value={task.target_url} /><Info label="Posting URL" value={task.posting_url || "-"} /><Info label="Approx Time" value={task.approx_time} /><Info label="Deadline" value={task.deadline ? new Date(task.deadline).toLocaleString() : "-"} /><Info label="Priority" value={task.priority} /><Info label="Payment Amount" value={`Rs. ${Number(task.payment_amount || 0)}`} /><Info label="Progress" value={`${Number(task.progress_percent || 0)}%`} /></div><div className="mt-lg"><h3 className="mb-sm text-h3 font-h3">Instructions</h3><p className="whitespace-pre-line rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">{task.instructions}</p></div><ProgressHistory task={task} /></div><div>{shellRole === "employee" ? <SubmitTask task={task} /> : <AdminReviewPanel task={task} />}</div></div></Shell>;
 }
 
 function Info({ label, value }) {
@@ -886,7 +946,12 @@ function SubmitTask({ task }) {
   const data = useData();
   const { profile } = useAuth();
   const notify = useToast();
-  const [form, setForm] = useState({ submission_url: "", notes: "", time_spent: "", file: null });
+  const [form, setForm] = useState({ submission_url: "", notes: "", time_spent: "", progress_percent: task.progress_percent || 0, file: null });
+  const saveProgress = async () => {
+    await data.saveProgress({ task_id: task.id, employee_id: profile.id, progress_percent: Number(form.progress_percent || 0), notes: form.notes, update_date: new Date().toISOString().slice(0, 10), created_at: new Date().toISOString() });
+    await data.saveTask({ ...task, progress_percent: Number(form.progress_percent || 0), status: Number(form.progress_percent || 0) >= 100 ? "submitted" : task.status });
+    notify("Daily progress updated.");
+  };
   const submit = async (e) => {
     e.preventDefault();
     try {
@@ -894,43 +959,81 @@ function SubmitTask({ task }) {
       await data.saveSubmission({ task_id: task.id, student_id: profile.id, submission_url: form.submission_url, screenshot_url, notes: form.notes, time_spent: form.time_spent, status: "submitted", submitted_at: new Date().toISOString() });
       await data.updateStatus("tasks", task.id, "submitted");
       notify("Task submitted for review.");
-      navigate("/student/tasks");
+      navigate("/employee/tasks");
     } catch (error) {
       notify(error.message, "error");
     }
   };
-  return <form className="space-y-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={submit}><h3 className="text-h3 font-h3">Submit Task</h3>{task.status === "pending" && <button className="w-full rounded-lg border border-outline-variant px-4 py-2 text-label-bold font-label-bold text-primary" type="button" onClick={async () => { await data.updateStatus("tasks", task.id, "in progress"); notify("Task started."); }}>Start Task</button>}<Field label="Submission URL" value={form.submission_url} onChange={(submission_url) => setForm({ ...form, submission_url })} /><Field label="Time Spent" value={form.time_spent} onChange={(time_spent) => setForm({ ...form, time_spent })} placeholder="2h 15m" /><label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Screenshot</span><input className="rounded-lg border border-outline-variant bg-surface px-md py-2" type="file" onChange={(e) => setForm({ ...form, file: e.target.files?.[0] })} /></label><label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Notes</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label><button className="w-full rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary">Submit Work</button></form>;
+  return <form className="space-y-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={submit}><h3 className="text-h3 font-h3">Submit Task</h3>{task.status === "pending" && <button className="w-full rounded-lg border border-outline-variant px-4 py-2 text-label-bold font-label-bold text-primary" type="button" onClick={async () => { await data.updateStatus("tasks", task.id, "in progress"); notify("Task started."); }}>Start Task</button>}<Field label="Daily Progress %" type="number" value={form.progress_percent} onChange={(progress_percent) => setForm({ ...form, progress_percent })} /><button className="w-full rounded-lg border border-outline-variant px-4 py-2 text-label-bold font-label-bold text-primary" type="button" onClick={saveProgress}>Update Daily Progress</button><Field label="Submission URL" value={form.submission_url} onChange={(submission_url) => setForm({ ...form, submission_url })} /><Field label="Time Spent" value={form.time_spent} onChange={(time_spent) => setForm({ ...form, time_spent })} placeholder="2h 15m" /><label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Screenshot</span><input className="rounded-lg border border-outline-variant bg-surface px-md py-2" type="file" onChange={(e) => setForm({ ...form, file: e.target.files?.[0] })} /></label><label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Notes</span><textarea className="min-h-24 rounded-lg border border-outline-variant bg-surface px-md py-2.5" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label><button className="w-full rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary">Submit Work</button></form>;
+}
+
+function ProgressHistory({ task }) {
+  const data = useData();
+  const updates = data.progressUpdates.filter((update) => update.task_id === task.id).slice(0, 5);
+  return <div className="mt-lg"><h3 className="mb-sm text-h3 font-h3">Progress Updates</h3>{updates.length ? <div className="space-y-sm">{updates.map((update) => <div className="rounded-lg border border-outline-variant/40 bg-surface-container-low p-md" key={update.id}><div className="flex justify-between text-body-sm"><span>{update.update_date}</span><b>{update.progress_percent}%</b></div><p className="mt-1 text-body-md text-on-surface-variant">{update.notes || "No notes"}</p></div>)}</div> : <p className="rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">No daily progress yet.</p>}</div>;
 }
 
 function AdminReviewPanel({ task }) {
   const data = useData();
   const notify = useToast();
+  const { profile } = useAuth();
   const submission = data.submissions.find((s) => s.task_id === task.id);
   const [rating, setRating] = useState({ rating: 5, remarks: "" });
+  const [payment, setPayment] = useState({ method: "JazzCash", transaction_number: "", file: null });
   const review = async (status) => {
     if (submission) await data.updateStatus("submissions", submission.id, status);
-    await data.updateStatus("tasks", task.id, status === "approved" ? "done" : status);
+    await data.saveTask({ ...task, status: status === "approved" ? "done" : status, final_forwarded_to_admin: profile.role === "manager" ? true : task.final_forwarded_to_admin });
     if (status === "approved") await data.saveRating({ task_id: task.id, student_id: task.student_id, rating: Number(rating.rating), remarks: rating.remarks, created_at: new Date().toISOString() });
     notify(`Submission marked ${status}.`);
   };
-  return <div className="space-y-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h3 className="text-h3 font-h3">Review Submission</h3>{submission ? <><Info label="Submission URL" value={<a className="text-primary" href={submission.submission_url} target="_blank" rel="noreferrer">{submission.submission_url}</a>} /><Info label="Time Spent" value={submission.time_spent} /><p className="rounded-lg bg-surface-container-low p-md text-body-md">{submission.notes}</p><Field label="Rating" type="number" value={rating.rating} onChange={(value) => setRating({ ...rating, rating: value })} /><Field label="Remarks" value={rating.remarks} onChange={(remarks) => setRating({ ...rating, remarks })} required={false} /><div className="grid grid-cols-1 gap-sm"><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={() => review("approved")}>Approve Submission</button><button className="rounded-lg bg-[#FFAB00] px-4 py-2 text-on-surface" onClick={() => review("revision required")}>Send for Revision</button><button className="rounded-lg bg-error px-4 py-2 text-white" onClick={() => review("rejected")}>Reject Submission</button></div></> : <EmptyState title="No submission" body="Student submission details will appear here." />}</div>;
+  const releasePayment = async () => {
+    const screenshot_url = await data.uploadPaymentProof(payment.file, `${task.student_id}/${task.id}-${Date.now()}-${payment.file?.name || "payment-proof"}`);
+    await data.savePayment({ task_id: task.id, employee_id: task.student_id, released_by: profile.id, amount: Number(task.payment_amount || 0), method: payment.method, transaction_number: payment.transaction_number, screenshot_url, status: "released", released_at: new Date().toISOString() });
+    await data.saveTask({ ...task, payment_status: "released" });
+    notify("Payment released.");
+  };
+  return <div className="space-y-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h3 className="text-h3 font-h3">Review Submission</h3>{submission ? <><Info label="Submission URL" value={<a className="text-primary" href={submission.submission_url} target="_blank" rel="noreferrer">{submission.submission_url}</a>} /><Info label="Time Spent" value={submission.time_spent} /><p className="rounded-lg bg-surface-container-low p-md text-body-md">{submission.notes}</p><Field label="Rating" type="number" value={rating.rating} onChange={(value) => setRating({ ...rating, rating: value })} /><Field label="Remarks" value={rating.remarks} onChange={(remarks) => setRating({ ...rating, remarks })} required={false} /><div className="grid grid-cols-1 gap-sm"><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={() => review("approved")}>{profile.role === "manager" ? "Forward/Approve to Admin" : "Approve Submission"}</button><button className="rounded-lg bg-[#FFAB00] px-4 py-2 text-on-surface" onClick={() => review("revision required")}>Send for Revision</button><button className="rounded-lg bg-error px-4 py-2 text-white" onClick={() => review("rejected")}>Reject Submission</button></div>{profile.role === "admin" && <div className="mt-lg space-y-md rounded-lg border border-outline-variant/50 bg-surface-container-low p-md"><h4 className="font-semibold">Release Payment</h4><SelectField label="Payment Company" value={payment.method} onChange={(method) => setPayment({ ...payment, method })} options={["JazzCash", "EasyPaisa", "Bank Transfer", "Cash", "Other"]} /><Field label="Transaction Number" value={payment.transaction_number} onChange={(transaction_number) => setPayment({ ...payment, transaction_number })} required={false} /><label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Payment Screenshot (max 100KB)</span><input className="rounded-lg border border-outline-variant bg-surface px-md py-2" type="file" accept="image/*" onChange={(e) => setPayment({ ...payment, file: e.target.files?.[0] })} /></label><button className="w-full rounded-lg bg-primary px-4 py-2 text-white" onClick={releasePayment} type="button">Release Payment</button></div>}</> : <EmptyState title="No submission" body="Employee submission details will appear here." />}</div>;
 }
 
 function SubmissionsPage() {
   const data = useData();
-  return <Shell role="admin" title="Submissions Review"><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Task</th><th>Student</th><th>Submitted</th><th>Link</th><th>Status</th><th className="text-right">Action</th></tr></thead><tbody>{data.submissions.map((s) => { const task = data.tasks.find((t) => t.id === s.task_id); const student = data.profiles.find((p) => p.id === s.student_id); return <tr key={s.id}><td>{task?.task_title}</td><td>{student?.full_name}</td><td>{new Date(s.submitted_at).toLocaleString()}</td><td><a className="text-primary" href={s.submission_url} target="_blank" rel="noreferrer">Open</a></td><td><StatusBadge status={s.status} /></td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/admin/tasks/${task?.id}`)}>Review</button></td></tr>; })}</tbody></table></div>{!data.submissions.length && <div className="p-lg"><EmptyState title="No submissions yet" body="Submitted SEO work will be queued for review here." /></div>}</div></Shell>;
+  return <Shell role="admin" title="Submissions Review"><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Task</th><th>Employee</th><th>Submitted</th><th>Link</th><th>Status</th><th className="text-right">Action</th></tr></thead><tbody>{data.submissions.map((s) => { const task = data.tasks.find((t) => t.id === s.task_id); const student = data.profiles.find((p) => p.id === s.student_id); return <tr key={s.id}><td>{task?.task_title}</td><td>{student?.full_name}</td><td>{new Date(s.submitted_at).toLocaleString()}</td><td><a className="text-primary" href={s.submission_url} target="_blank" rel="noreferrer">Open</a></td><td><StatusBadge status={s.status} /></td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/admin/tasks/${task?.id}`)}>Review</button></td></tr>; })}</tbody></table></div>{!data.submissions.length && <div className="p-lg"><EmptyState title="No submissions yet" body="Submitted SEO work will be queued for review here." /></div>}</div></Shell>;
 }
 
-function StudentDashboard() {
+function ManagerDashboard() {
+  const { profile } = useAuth();
+  const data = useData();
+  const teamTasks = data.tasks.filter((task) => task.manager_id === profile.id || task.assigned_by === profile.id);
+  return <Shell role="manager" title="Manager Dashboard"><div className="mx-auto max-w-7xl space-y-lg"><div className="grid grid-cols-1 gap-md md:grid-cols-4"><Card title="Team Tasks" value={teamTasks.length} meta="Assigned or created" icon="assignment" /><Card title="Submitted" value={teamTasks.filter((t) => t.status === "submitted").length} meta="Need review" /><Card title="Forwarded" value={teamTasks.filter((t) => t.final_forwarded_to_admin).length} meta="Sent to admin" /><Card title="Avg Progress" value={teamTasks.length ? `${Math.round(teamTasks.reduce((s, t) => s + Number(t.progress_percent || 0), 0) / teamTasks.length)}%` : "0%"} meta="Team completion" /></div><TasksTable studentId={profile.id} /></div></Shell>;
+}
+
+function ManagerTasksPage() {
+  const { profile } = useAuth();
+  const data = useData();
+  const notify = useToast();
+  return <Shell role="manager" title="Team Tasks"><div className="space-y-lg"><TaskForm managerMode onSave={async (task) => { await data.saveTask(task); notify("Employee task assigned."); }} /><TasksTable studentId={profile.id} /></div></Shell>;
+}
+
+function ManagerSubmissionsPage() {
+  const { profile } = useAuth();
+  const data = useData();
+  const rows = data.submissions.filter((submission) => {
+    const task = data.tasks.find((item) => item.id === submission.task_id);
+    return task?.manager_id === profile.id;
+  });
+  return <Shell role="manager" title="Team Submissions"><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Task</th><th>Employee</th><th>Submitted</th><th>Link</th><th>Status</th><th className="text-right">Action</th></tr></thead><tbody>{rows.map((s) => { const task = data.tasks.find((t) => t.id === s.task_id); const employee = data.profiles.find((p) => p.id === s.student_id); return <tr key={s.id}><td>{task?.task_title}</td><td>{employee?.full_name}</td><td>{new Date(s.submitted_at).toLocaleString()}</td><td><a className="text-primary" href={s.submission_url} target="_blank" rel="noreferrer">Open</a></td><td><StatusBadge status={s.status} /></td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/manager/tasks/${task?.id}`)}>Review</button></td></tr>; })}</tbody></table></div>{!rows.length && <div className="p-lg"><EmptyState title="No team submissions yet" body="Employee submissions assigned to you will appear here." /></div>}</div></Shell>;
+}
+
+function EmployeeDashboard() {
   const { profile } = useAuth();
   const data = useData();
   const mine = data.tasks.filter((t) => t.student_id === profile.id);
-  return <Shell role="student" title="Student Dashboard"><div className="mx-auto max-w-7xl space-y-lg"><div className="grid grid-cols-1 gap-md md:grid-cols-4"><Card title="Total Tasks" value={mine.length} meta="Assigned to you" icon="assignment" /><Card title="Completed" value={mine.filter((t) => ["done", "approved"].includes(t.status)).length} meta="Reviewed work" accent="text-secondary" /><Card title="Pending" value={mine.filter((t) => t.status === "pending").length} meta="Waiting to start" /><Card title="Submitted" value={mine.filter((t) => t.status === "submitted").length} meta="Under review" /></div><TasksTable studentId={profile.id} /></div></Shell>;
+  return <Shell role="employee" title="Employee Dashboard"><div className="mx-auto max-w-7xl space-y-lg"><div className="grid grid-cols-1 gap-md md:grid-cols-4"><Card title="Total Tasks" value={mine.length} meta="Assigned to you" icon="assignment" /><Card title="Completed" value={mine.filter((t) => ["done", "approved"].includes(t.status)).length} meta="Reviewed work" accent="text-secondary" /><Card title="Pending" value={mine.filter((t) => t.status === "pending").length} meta="Waiting to start" /><Card title="Submitted" value={mine.filter((t) => t.status === "submitted").length} meta="Under review" /></div><TasksTable studentId={profile.id} /></div></Shell>;
 }
 
-function StudentTasksPage() {
+function EmployeeTasksPage() {
   const { profile } = useAuth();
-  return <Shell role="student" title="My Tasks"><TasksTable studentId={profile.id} /></Shell>;
+  return <Shell role="employee" title="My Tasks"><TasksTable studentId={profile.id} /></Shell>;
 }
 
 function PerformancePage() {
@@ -940,7 +1043,7 @@ function PerformancePage() {
   const ratings = data.ratings.filter((r) => r.student_id === profile.id);
   const avg = ratings.length ? (ratings.reduce((s, r) => s + Number(r.rating), 0) / ratings.length).toFixed(1) : "0.0";
   const late = mine.filter((t) => t.deadline && new Date(t.deadline) < new Date() && !["done", "approved"].includes(t.status)).length;
-  return <Shell role="student" title="Performance"><div className="grid grid-cols-1 gap-md md:grid-cols-5"><Card title="Total Tasks" value={mine.length} meta="Assigned" /><Card title="Completed" value={mine.filter((t) => ["done", "approved"].includes(t.status)).length} meta="Finished" accent="text-secondary" /><Card title="Pending" value={mine.filter((t) => t.status === "pending").length} meta="Not started" /><Card title="Late Tasks" value={late} meta="Past deadline" accent="text-error" /><Card title="Average Rating" value={avg} meta="Admin score" icon="star" /></div><div className="mt-lg rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h3 className="mb-md text-h3 font-h3">Ratings & Remarks</h3>{ratings.length ? ratings.map((r) => { const task = data.tasks.find((t) => t.id === r.task_id); return <div key={r.id} className="border-t border-outline-variant/30 py-md"><div className="font-semibold">{task?.task_title}</div><div className="text-[#FFAB00]">Rating: {r.rating}/5</div><p className="text-body-md text-on-surface-variant">{r.remarks}</p></div>; }) : <EmptyState title="No ratings yet" body="Approved task ratings and admin remarks will appear here." />}</div></Shell>;
+  return <Shell role="employee" title="Performance"><div className="grid grid-cols-1 gap-md md:grid-cols-5"><Card title="Total Tasks" value={mine.length} meta="Assigned" /><Card title="Completed" value={mine.filter((t) => ["done", "approved"].includes(t.status)).length} meta="Finished" accent="text-secondary" /><Card title="Pending" value={mine.filter((t) => t.status === "pending").length} meta="Not started" /><Card title="Late Tasks" value={late} meta="Past deadline" accent="text-error" /><Card title="Average Rating" value={avg} meta="Admin score" icon="star" /></div><div className="mt-lg rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h3 className="mb-md text-h3 font-h3">Ratings & Remarks</h3>{ratings.length ? ratings.map((r) => { const task = data.tasks.find((t) => t.id === r.task_id); return <div key={r.id} className="border-t border-outline-variant/30 py-md"><div className="font-semibold">{task?.task_title}</div><div className="text-[#FFAB00]">Rating: {r.rating}/5</div><p className="text-body-md text-on-surface-variant">{r.remarks}</p></div>; }) : <EmptyState title="No ratings yet" body="Approved task ratings and admin remarks will appear here." />}</div></Shell>;
 }
 
 function ReportsPage() {
@@ -969,7 +1072,7 @@ function ReportsPage() {
     notify("Excel report generated.");
   };
   const shareWhatsapp = () => { const summary = `SEO TaskFlow Report%0ATotal tasks: ${rows.length}%0ACompleted: ${rows.filter((r) => ["done", "approved"].includes(String(r.Status).toLowerCase())).length}`; window.open(`https://wa.me/?text=${summary}`, "_blank"); };
-  return <Shell role="admin" title="Reports"><div className="space-y-lg"><div className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-3 xl:grid-cols-6"><SelectField label="Student" value={filters.student} onChange={(student) => setFilters({ ...filters, student })} options={data.profiles.filter((p) => p.role === "student").map((p) => p.id)} /><SelectField label="Project" value={filters.project} onChange={(project) => setFilters({ ...filters, project })} options={data.projects.map((p) => p.id)} /><SelectField label="Status" value={filters.status} onChange={(status) => setFilters({ ...filters, status })} options={statusLabels} /><SelectField label="Task Type" value={filters.task_type} onChange={(task_type) => setFilters({ ...filters, task_type })} options={taskTypes} /><Field label="From" type="date" value={filters.from} onChange={(from) => setFilters({ ...filters, from })} required={false} /><Field label="To" type="date" value={filters.to} onChange={(to) => setFilters({ ...filters, to })} required={false} /></div><div className="flex flex-wrap gap-sm"><button className="rounded-lg bg-primary px-4 py-2 text-white" onClick={exportPdf}>Export PDF</button><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={exportExcel}>Export Excel</button><button className="rounded-lg border border-outline-variant px-4 py-2" onClick={shareWhatsapp}>Share WhatsApp</button></div><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr>{Object.keys(rows[0] || { "Member Name": "", Date: "", Task: "", Website: "", Link: "", "Approx Time": "", Status: "", Rating: "", Remarks: "" }).map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((row, i) => <tr key={i}>{Object.entries(row).map(([k, v]) => <td key={k}>{k === "Status" ? <StatusBadge status={v} /> : v}</td>)}</tr>)}</tbody></table></div>{!rows.length && <div className="p-lg"><EmptyState title="No report rows" body="Adjust filters or create tasks to generate reports." /></div>}</div></div></Shell>;
+  return <Shell role="admin" title="Reports"><div className="space-y-lg"><div className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-3 xl:grid-cols-6"><SelectField label="Employee" value={filters.student} onChange={(student) => setFilters({ ...filters, student })} options={data.profiles.filter((p) => p.role === "employee").map((p) => p.id)} /><SelectField label="Project" value={filters.project} onChange={(project) => setFilters({ ...filters, project })} options={data.projects.map((p) => p.id)} /><SelectField label="Status" value={filters.status} onChange={(status) => setFilters({ ...filters, status })} options={statusLabels} /><SelectField label="Task Type" value={filters.task_type} onChange={(task_type) => setFilters({ ...filters, task_type })} options={taskTypes} /><Field label="From" type="date" value={filters.from} onChange={(from) => setFilters({ ...filters, from })} required={false} /><Field label="To" type="date" value={filters.to} onChange={(to) => setFilters({ ...filters, to })} required={false} /></div><div className="flex flex-wrap gap-sm"><button className="rounded-lg bg-primary px-4 py-2 text-white" onClick={exportPdf}>Export PDF</button><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={exportExcel}>Export Excel</button><button className="rounded-lg border border-outline-variant px-4 py-2" onClick={shareWhatsapp}>Share WhatsApp</button></div><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr>{Object.keys(rows[0] || { "Member Name": "", Date: "", Task: "", Website: "", Link: "", "Approx Time": "", Status: "", Rating: "", Remarks: "" }).map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((row, i) => <tr key={i}>{Object.entries(row).map(([k, v]) => <td key={k}>{k === "Status" ? <StatusBadge status={v} /> : v}</td>)}</tr>)}</tbody></table></div>{!rows.length && <div className="p-lg"><EmptyState title="No report rows" body="Adjust filters or create tasks to generate reports." /></div>}</div></div></Shell>;
 }
 
 function SettingsPage({ role }) {
@@ -981,21 +1084,27 @@ function AppRouter() {
   const path = usePath();
   if (path === "/") return <PublicLanding />;
   if (path === "/admin/login") return <LoginPage role="admin" />;
-  if (path === "/student/login") return <LoginPage role="student" />;
-  if (path === "/student/signup") return <SignupPage />;
+  if (path === "/manager/login") return <LoginPage role="manager" />;
+  if (path === "/employee/login" || path === "/student/login") return <LoginPage role="employee" />;
+  if (path === "/employee/signup" || path === "/student/signup") return <SignupPage />;
   if (path === "/admin/dashboard") return <Guard role="admin"><AdminDashboard /></Guard>;
-  if (path === "/admin/students") return <Guard role="admin"><StudentsPage /></Guard>;
+  if (path === "/admin/employees" || path === "/admin/students") return <Guard role="admin"><StudentsPage /></Guard>;
   if (path === "/admin/tasks") return <Guard role="admin"><TasksPage /></Guard>;
   if (path.startsWith("/admin/tasks/")) return <Guard role="admin"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/submissions") return <Guard role="admin"><SubmissionsPage /></Guard>;
   if (path === "/admin/projects") return <Guard role="admin"><ProjectsPage /></Guard>;
   if (path === "/admin/reports") return <Guard role="admin"><ReportsPage /></Guard>;
   if (path === "/admin/settings") return <Guard role="admin"><SettingsPage role="admin" /></Guard>;
-  if (path === "/student/dashboard") return <Guard role="student"><StudentDashboard /></Guard>;
-  if (path === "/student/tasks") return <Guard role="student"><StudentTasksPage /></Guard>;
-  if (path.startsWith("/student/tasks/")) return <Guard role="student"><TaskDetail id={path.split("/").pop()} studentMode /></Guard>;
-  if (path === "/student/performance") return <Guard role="student"><PerformancePage /></Guard>;
-  if (path === "/student/settings") return <Guard role="student"><SettingsPage role="student" /></Guard>;
+  if (path === "/manager/dashboard") return <Guard role="manager"><ManagerDashboard /></Guard>;
+  if (path === "/manager/tasks") return <Guard role="manager"><ManagerTasksPage /></Guard>;
+  if (path.startsWith("/manager/tasks/")) return <Guard role="manager"><TaskDetail id={path.split("/").pop()} /></Guard>;
+  if (path === "/manager/submissions") return <Guard role="manager"><ManagerSubmissionsPage /></Guard>;
+  if (path === "/manager/settings") return <Guard role="manager"><SettingsPage role="manager" /></Guard>;
+  if (path === "/employee/dashboard" || path === "/student/dashboard") return <Guard role="employee"><EmployeeDashboard /></Guard>;
+  if (path === "/employee/tasks" || path === "/student/tasks") return <Guard role="employee"><EmployeeTasksPage /></Guard>;
+  if (path.startsWith("/employee/tasks/") || path.startsWith("/student/tasks/")) return <Guard role="employee"><TaskDetail id={path.split("/").pop()} studentMode /></Guard>;
+  if (path === "/employee/performance" || path === "/student/performance") return <Guard role="employee"><PerformancePage /></Guard>;
+  if (path === "/employee/settings" || path === "/student/settings") return <Guard role="employee"><SettingsPage role="employee" /></Guard>;
   return <PublicLanding />;
 }
 
