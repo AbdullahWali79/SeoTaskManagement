@@ -1006,7 +1006,121 @@ function ProjectForm({ onSave, initial = {} }) {
 function ProjectsPage() {
   const data = useData();
   const notify = useToast();
-  return <Shell role="admin" title="Projects/Websites"><div className="space-y-lg"><ProjectForm onSave={async (row) => { await data.saveProject(row); notify("Project saved."); }} /><div className="grid grid-cols-1 gap-md md:grid-cols-2 xl:grid-cols-3">{data.projects.map((project) => <div key={project.id} className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><div className="mb-md flex items-start justify-between"><ProjectTag project={project} /><button onClick={() => data.deleteProject(project.id)}><Icon className="text-error">delete</Icon></button></div><h3 className="text-h3 font-h3">{project.project_name}</h3><a className="mt-1 block break-all text-body-sm text-primary" href={project.website_url} target="_blank" rel="noreferrer">{project.website_url}</a><p className="mt-md text-body-md text-on-surface-variant">{project.notes}</p></div>)}</div></div></Shell>;
+  return <Shell role="admin" title="Projects/Websites"><div className="space-y-lg"><ProjectForm onSave={async (row) => { await data.saveProject(row); notify("Project saved."); }} /><div className="grid grid-cols-1 gap-md md:grid-cols-2 xl:grid-cols-3">{data.projects.map((project) => <button key={project.id} className="rounded-xl border border-outline-variant bg-surface p-lg text-left shadow-level-1 transition hover:border-primary hover:shadow-level-2" onClick={() => navigate(`/admin/projects/${project.id}`)} type="button"><div className="mb-md flex items-start justify-between"><ProjectTag project={project} /><span className="flex gap-sm"><Icon className="text-primary">analytics</Icon><button onClick={(event) => { event.stopPropagation(); data.deleteProject(project.id); }} type="button"><Icon className="text-error">delete</Icon></button></span></div><h3 className="text-h3 font-h3">{project.project_name}</h3><span className="mt-1 block break-all text-body-sm text-primary">{project.website_url}</span><p className="mt-md text-body-md text-on-surface-variant">{project.notes}</p></button>)}</div></div></Shell>;
+}
+
+function getProjectReportRows(project, data) {
+  return data.tasks.filter((task) => task.project_id === project.id).map((task) => {
+    const employee = data.profiles.find((profile) => profile.id === task.student_id);
+    const manager = data.profiles.find((profile) => profile.id === task.manager_id);
+    const submission = data.submissions.find((item) => item.task_id === task.id);
+    const rating = data.ratings.find((item) => item.task_id === task.id);
+    return {
+      Employee: employee?.full_name || "",
+      Manager: manager?.full_name || "",
+      Task: task.task_title || "",
+      Type: task.task_type || "",
+      Website: project.project_name || "",
+      Link: submission?.submission_url || task.target_url || "",
+      Progress: `${Number(task.progress_percent || 0)}%`,
+      "Approx Time": task.approx_time || "",
+      Status: task.status || "",
+      Payment: Number(task.payment_amount || 0),
+      "Payment Status": task.payment_status || "pending",
+      Rating: rating?.rating || "",
+      Remarks: rating?.remarks || ""
+    };
+  });
+}
+
+function downloadTableExcel(filename, rows) {
+  const headers = Object.keys(rows[0] || { Employee: "", Manager: "", Task: "", Type: "", Website: "", Link: "", Progress: "", "Approx Time": "", Status: "", Payment: "", "Payment Status": "", Rating: "", Remarks: "" });
+  const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (match) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[match]);
+  const html = `<!doctype html><html><head><meta charset="utf-8" /></head><body><table><thead><tr>${headers.map((header) => `<th style="background:#e7eeff;color:#091c35;border:1px solid #c3c6d6;padding:8px;font-weight:bold;">${escape(header)}</th>`).join("")}</tr></thead><tbody>${rows.map((row, index) => `<tr>${headers.map((header) => `<td style="border:1px solid #dfe3ec;padding:8px;background:${index % 2 ? "#f9f9ff" : "#ffffff"};">${escape(row[header])}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`;
+  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function ProjectDetailPage({ id }) {
+  const data = useData();
+  const notify = useToast();
+  const project = data.projects.find((item) => item.id === id);
+  if (!project) return <Shell role="admin" title="Project Report"><EmptyState title="Project not found" body="The selected project does not exist." /></Shell>;
+  const projectTasks = data.tasks.filter((task) => task.project_id === project.id);
+  const rows = getProjectReportRows(project, data);
+  const done = projectTasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase())).length;
+  const submitted = projectTasks.filter((task) => String(task.status).toLowerCase() === "submitted").length;
+  const inProgress = projectTasks.filter((task) => String(task.status).toLowerCase() === "in progress").length;
+  const pending = projectTasks.filter((task) => String(task.status).toLowerCase() === "pending").length;
+  const avgProgress = projectTasks.length ? Math.round(projectTasks.reduce((sum, task) => sum + Number(task.progress_percent || 0), 0) / projectTasks.length) : 0;
+  const exportPdf = () => {
+    const doc = new jsPDF({ orientation: "landscape" });
+    doc.text(`${project.project_name} Project Report`, 14, 14);
+    doc.text(`Website: ${project.website_url || "-"}`, 14, 22);
+    autoTable(doc, { head: [Object.keys(rows[0] || { Employee: "", Manager: "", Task: "", Type: "", Website: "", Link: "", Progress: "", "Approx Time": "", Status: "", Payment: "", "Payment Status": "", Rating: "", Remarks: "" })], body: rows.map(Object.values), startY: 30, styles: { fontSize: 8 } });
+    doc.save(`${project.project_name || "project"}-report.pdf`);
+    notify("Project PDF report generated.");
+  };
+  const exportExcel = () => {
+    downloadTableExcel(`${project.project_name || "project"}-report.xls`, rows);
+    notify("Project Excel report generated.");
+  };
+  return (
+    <Shell role="admin" title="Project Progress">
+      <div className="space-y-lg">
+        <div className="flex flex-col justify-between gap-md md:flex-row md:items-start">
+          <div>
+            <button className="mb-sm flex items-center gap-xs text-primary" onClick={() => navigate("/admin/projects")} type="button"><Icon className="text-[18px]">arrow_back</Icon>Back to projects</button>
+            <h1 className="text-h1 font-h1">{project.project_name}</h1>
+            <a className="mt-1 block break-all text-primary" href={project.website_url} target="_blank" rel="noreferrer">{project.website_url}</a>
+            <p className="mt-sm text-on-surface-variant">{project.notes}</p>
+          </div>
+          <div className="flex gap-sm">
+            <button className="rounded-lg bg-primary px-4 py-2 text-white" onClick={exportPdf}>Download PDF</button>
+            <button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={exportExcel}>Download Excel</button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-md md:grid-cols-5">
+          <Card title="Total Tasks" value={projectTasks.length} meta="Project workload" icon="assignment" />
+          <Card title="Done" value={done} meta="Completed" accent="text-secondary" />
+          <Card title="Submitted" value={submitted} meta="In review" />
+          <Card title="In Progress" value={inProgress} meta="Active" accent="text-primary" />
+          <Card title="Avg Progress" value={`${avgProgress}%`} meta={`${pending} pending`} icon="trending_up" />
+        </div>
+        <div className="grid grid-cols-1 gap-lg lg:grid-cols-3">
+          <div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 lg:col-span-2">
+            <h3 className="mb-md text-h3 font-h3">Graphical Progress</h3>
+            <div className="space-y-md">
+              {[["Done", done, "#36B37E"], ["Submitted", submitted, "#6554C0"], ["In Progress", inProgress, "#0052CC"], ["Pending", pending, "#7A869A"]].map(([label, count, color]) => {
+                const width = projectTasks.length ? Math.round((count / projectTasks.length) * 100) : 0;
+                return <div key={label}><div className="mb-1 flex justify-between text-body-sm"><span>{label}</span><b>{count} ({width}%)</b></div><div className="h-3 rounded-full bg-surface-container-high"><div className="h-full rounded-full" style={{ width: `${width}%`, backgroundColor: color }} /></div></div>;
+              })}
+            </div>
+          </div>
+          <div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1">
+            <h3 className="mb-md text-h3 font-h3">Average Completion</h3>
+            <div className="relative mx-auto flex h-44 w-44 items-center justify-center rounded-full" style={{ background: `conic-gradient(#0052CC ${avgProgress}%, #e7eeff ${avgProgress}% 100%)` }}>
+              <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white text-h1 font-h1">{avgProgress}%</div>
+            </div>
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1">
+          <div className="overflow-x-auto">
+            <table className="sheet-table">
+              <thead><tr>{Object.keys(rows[0] || { Employee: "", Manager: "", Task: "", Type: "", Website: "", Link: "", Progress: "", "Approx Time": "", Status: "", Payment: "", "Payment Status": "", Rating: "", Remarks: "" }).map((header) => <th key={header}>{header}</th>)}</tr></thead>
+              <tbody>{rows.map((row, index) => <tr key={index}>{Object.entries(row).map(([key, value]) => <td key={key}>{key === "Status" || key === "Payment Status" ? <StatusBadge status={value} /> : value}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+          {!rows.length && <div className="p-lg"><EmptyState title="No project tasks yet" body="Assign tasks to this project to see graphical progress and report rows." /></div>}
+        </div>
+      </div>
+    </Shell>
+  );
 }
 
 function TaskForm({ initial = {}, onSave, managerMode = false }) {
@@ -1213,6 +1327,7 @@ function AppRouter() {
   if (path.startsWith("/admin/tasks/")) return <Guard role="admin"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/submissions") return <Guard role="admin"><SubmissionsPage /></Guard>;
   if (path === "/admin/projects") return <Guard role="admin"><ProjectsPage /></Guard>;
+  if (path.startsWith("/admin/projects/")) return <Guard role="admin"><ProjectDetailPage id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/reports") return <Guard role="admin"><ReportsPage /></Guard>;
   if (path === "/admin/settings") return <Guard role="admin"><SettingsPage role="admin" /></Guard>;
   if (path === "/manager/dashboard") return <Guard role="manager"><ManagerDashboard /></Guard>;
