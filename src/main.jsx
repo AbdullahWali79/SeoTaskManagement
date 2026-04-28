@@ -882,6 +882,7 @@ function Shell({ role, title, children }) {
     ["/admin/employees", "group", "Employees"],
     ["/admin/tasks", "assignment", "Task Management"],
     ["/admin/submissions", "send_and_archive", "Submissions"],
+    ["/admin/payments", "payments", "Payments"],
     ["/admin/projects", "language", "Projects/Websites"],
     ["/admin/reports", "analytics", "Reports"],
     ["/admin/settings", "settings", "Settings"]
@@ -1034,7 +1035,7 @@ function AdminReviewInbox() {
           {revisionReplies.map((submission) => { const task = data.tasks.find((item) => item.id === submission.task_id); return <TaskInboxRow key={submission.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={submission.notes || task?.manager_remarks || "Revision needs review."} actionLabel="Re-check" />; })}
         </InboxSection>
         <InboxSection title="Payments Pending" icon="payments" empty="No approved work waiting for payment.">
-          {paymentsPending.map((task) => <TaskInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={`Rs. ${Number(task.payment_amount || 0)} pending release`} actionLabel="Release Payment" />)}
+          {paymentsPending.map((task) => <TaskInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={`Rs. ${Number(task.payment_amount || 0)} pending release`} actionLabel="Release Payment" actionPath="/admin/payments" />)}
         </InboxSection>
       </div>
     </Shell>
@@ -1046,9 +1047,9 @@ function InboxSection({ title, icon, empty, children }) {
   return <section className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="flex items-center gap-sm border-b border-outline-variant/50 bg-surface-container-low px-lg py-md"><Icon className="text-primary">{icon}</Icon><h2 className="text-h3 font-h3">{title}</h2><span className="ml-auto rounded-full bg-surface px-sm py-1 text-label-bold font-label-bold text-on-surface-variant">{items.length}</span></div>{items.length ? <div>{items}</div> : <div className="p-lg"><EmptyState title={empty} body="New items will appear here automatically." /></div>}</section>;
 }
 
-function TaskInboxRow({ task, employee, project, note, actionLabel }) {
+function TaskInboxRow({ task, employee, project, note, actionLabel, actionPath }) {
   if (!task) return null;
-  return <div className="grid grid-cols-1 items-center gap-md border-t border-outline-variant/30 p-md md:grid-cols-[1.3fr_1fr_1fr_1.2fr_auto]"><div><button className="font-semibold text-primary" onClick={() => navigate(`/admin/tasks/${task.id}`)} type="button">{task.task_title}</button><p className="text-body-sm text-on-surface-variant">{task.task_type}</p></div><div><p>{employee?.full_name || "-"}</p><p className="text-body-sm text-on-surface-variant">{employee?.email || ""}</p></div><ProjectTag project={project} /><p className="line-clamp-2 text-body-sm text-on-surface-variant">{note}</p><div className="flex items-center justify-end gap-sm"><StatusBadge status={task.status} /><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/admin/tasks/${task.id}`)} type="button">{actionLabel}</button></div></div>;
+  return <div className="grid grid-cols-1 items-center gap-md border-t border-outline-variant/30 p-md md:grid-cols-[1.3fr_1fr_1fr_1.2fr_auto]"><div><button className="font-semibold text-primary" onClick={() => navigate(`/admin/tasks/${task.id}`)} type="button">{task.task_title}</button><p className="text-body-sm text-on-surface-variant">{task.task_type}</p></div><div><p>{employee?.full_name || "-"}</p><p className="text-body-sm text-on-surface-variant">{employee?.email || ""}</p></div><ProjectTag project={project} /><p className="line-clamp-2 text-body-sm text-on-surface-variant">{note}</p><div className="flex items-center justify-end gap-sm"><StatusBadge status={task.status} /><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(actionPath || `/admin/tasks/${task.id}`)} type="button">{actionLabel}</button></div></div>;
 }
 
 function StudentsPage() {
@@ -1459,6 +1460,41 @@ function SubmissionsPage() {
   return <Shell role="admin" title="Submissions Review"><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr><th>Task</th><th>Employee</th><th>Submitted</th><th>Link</th><th>Manager Remarks</th><th>Status</th><th className="text-right">Action</th></tr></thead><tbody>{rows.map((row) => { const task = row.task; const student = data.profiles.find((p) => p.id === task?.student_id); return <tr key={`${row.type}-${row.id}`}><td>{task?.task_title}</td><td>{student?.full_name}</td><td>{row.submission?.submitted_at ? new Date(row.submission.submitted_at).toLocaleString() : task?.manager_reviewed_at ? new Date(task.manager_reviewed_at).toLocaleString() : "-"}</td><td>{row.submission?.submission_url ? <a className="text-primary" href={row.submission.submission_url} target="_blank" rel="noreferrer">Open</a> : <span className="text-on-surface-variant">Manager forwarded</span>}</td><td className="max-w-xs truncate">{task?.manager_remarks || "-"}</td><td><StatusBadge status={task?.status || row.submission?.status} /></td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/admin/tasks/${task?.id}`)}>Review</button></td></tr>; })}</tbody></table></div>{!rows.length && <div className="p-lg"><EmptyState title="No submissions yet" body="Submitted or manager-forwarded SEO work will be queued for review here." /></div>}</div></Shell>;
 }
 
+function PaymentsPage() {
+  const data = useData();
+  const payableTasks = data.tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase()) || task.payment_status === "released");
+  const pending = payableTasks.filter((task) => task.payment_status !== "released");
+  const released = payableTasks.filter((task) => task.payment_status === "released");
+  const totalPending = pending.reduce((sum, task) => sum + Number(task.payment_amount || 0), 0);
+  const totalReleased = released.reduce((sum, task) => sum + Number(task.payment_amount || 0), 0);
+  return (
+    <Shell role="admin" title="Payments Queue">
+      <div className="mx-auto max-w-7xl space-y-lg">
+        <div className="grid grid-cols-1 gap-md md:grid-cols-4">
+          <Card title="Payable Tasks" value={payableTasks.length} meta="Approved/completed" icon="task_alt" />
+          <Card title="Pending Payments" value={pending.length} meta={`Rs. ${totalPending}`} icon="pending_actions" accent="text-[#FFAB00]" />
+          <Card title="Released" value={released.length} meta={`Rs. ${totalReleased}`} icon="payments" accent="text-secondary" />
+          <Card title="Total Amount" value={`Rs. ${totalPending + totalReleased}`} meta="Payable + released" icon="account_balance_wallet" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1">
+          <div className="overflow-x-auto">
+            <table className="sheet-table">
+              <thead><tr><th>Task</th><th>Employee Contact</th><th>Website</th><th>Amount</th><th>Method</th><th>Transaction</th><th>Released At</th><th>Status</th><th className="text-right">Action</th></tr></thead>
+              <tbody>{payableTasks.map((task) => {
+                const employee = data.profiles.find((profile) => profile.id === task.student_id);
+                const project = data.projects.find((item) => item.id === task.project_id);
+                const payment = data.payments.find((item) => item.task_id === task.id);
+                return <tr key={task.id}><td><button className="font-semibold text-primary" onClick={() => navigate(`/admin/tasks/${task.id}`)} type="button">{task.task_title}</button><div className="text-body-sm text-on-surface-variant">{task.task_type}</div></td><td><div>{employee?.full_name || "-"}</div><div className="text-body-sm text-on-surface-variant">{employee?.email || "-"}</div><div className="text-body-sm text-on-surface-variant">{employee?.phone || "-"}</div></td><td><ProjectTag project={project} /></td><td>Rs. {Number(payment?.amount || task.payment_amount || 0)}</td><td>{payment?.method || "-"}</td><td>{payment?.transaction_number || "-"}</td><td>{payment?.released_at ? new Date(payment.released_at).toLocaleString() : "-"}</td><td><StatusBadge status={task.payment_status === "released" ? "approved" : "pending"} /></td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/admin/tasks/${task.id}`)} type="button">{task.payment_status === "released" ? "View" : "Release"}</button></td></tr>;
+              })}</tbody>
+            </table>
+          </div>
+          {!payableTasks.length && <div className="p-lg"><EmptyState title="No payments queued" body="Approved or completed tasks will appear here for payment release." /></div>}
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
 function ManagerDashboard() {
   const { profile } = useAuth();
   const data = useData();
@@ -1621,6 +1657,7 @@ function AppRouter() {
   if (path === "/admin/tasks") return <Guard role="admin"><TasksPage /></Guard>;
   if (path.startsWith("/admin/tasks/")) return <Guard role="admin"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/submissions") return <Guard role="admin"><SubmissionsPage /></Guard>;
+  if (path === "/admin/payments") return <Guard role="admin"><PaymentsPage /></Guard>;
   if (path === "/admin/projects") return <Guard role="admin"><ProjectsPage /></Guard>;
   if (path.startsWith("/admin/projects/")) return <Guard role="admin"><ProjectDetailPage id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/reports") return <Guard role="admin"><ReportsPage /></Guard>;
