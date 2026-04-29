@@ -346,6 +346,19 @@ function getLatestTaskProgress(task, progressUpdates) {
   return Number(updates[0]?.progress_percent ?? task.progress_percent ?? 0);
 }
 
+function buildManagerForwardSummary(task, data, remarks) {
+  const employee = data.profiles.find((person) => person.id === task.student_id);
+  const submission = data.submissions.find((item) => item.task_id === task.id);
+  return [
+    `Employee: ${employee?.full_name || "-"}`,
+    `Task: ${task.task_title || "-"}`,
+    "Progress: 100%",
+    `Manager Remarks: ${remarks || task.manager_remarks || "-"}`,
+    `Submission Link: ${submission?.submission_url || task.posting_url || task.target_url || "-"}`,
+    `Payment Amount: Rs. ${Number(task.payment_amount || 0)}`
+  ].join("\n");
+}
+
 function navigate(path) {
   window.history.pushState({}, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
@@ -891,6 +904,7 @@ function Shell({ role, title, children }) {
     ["/manager/dashboard", "dashboard", "Dashboard"],
     ["/manager/inbox", "inbox", "Review Inbox"],
     ["/manager/tasks", "assignment", "Team Tasks"],
+    ["/manager/performance", "trending_up", "Team Performance"],
     ["/manager/submissions", "send_and_archive", "Submissions"],
     ["/manager/settings", "settings", "Settings"]
   ] : [
@@ -1034,7 +1048,7 @@ function AdminReviewInbox() {
           {pendingPeople.map((person) => <div className="grid grid-cols-1 items-center gap-md border-t border-outline-variant/30 p-md md:grid-cols-[1.5fr_1fr_1fr_auto]" key={person.id}><div><p className="font-semibold">{person.full_name || "Unnamed"}</p><p className="text-body-sm text-on-surface-variant">{person.email}</p></div><div className="text-body-sm">{person.phone || "-"}</div><StatusBadge status={person.status} /><div className="flex justify-end gap-sm"><button className="rounded-lg bg-secondary px-3 py-2 text-xs font-semibold text-white" onClick={() => approvePerson(person)} type="button">Approve</button><button className="rounded-lg bg-error px-3 py-2 text-xs font-semibold text-white" onClick={() => rejectPerson(person)} type="button">Reject</button></div></div>)}
         </InboxSection>
         <InboxSection title="Manager Forwarded Tasks" icon="forward_to_inbox" empty="No manager-forwarded tasks waiting for admin review.">
-          {managerForwarded.map((task) => <TaskInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={task.manager_remarks || "Manager forwarded for final admin review."} actionLabel="Review Work" />)}
+          {managerForwarded.map((task) => <TaskInboxRow key={task.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={task.manager_forward_summary || task.manager_remarks || "Manager forwarded for final admin review."} actionLabel="Review Work" />)}
         </InboxSection>
         <InboxSection title="Submitted Tasks" icon="publish" empty="No direct submitted tasks.">
           {directSubmissions.map((submission) => { const task = data.tasks.find((item) => item.id === submission.task_id); return <TaskInboxRow key={submission.id} task={task} employee={taskEmployee(task)} project={taskProject(task)} note={submission.notes || submission.submission_url || "Employee submitted work."} actionLabel="Review Submission" />; })}
@@ -1370,6 +1384,11 @@ function RevisionNotice({ task }) {
   return <div className="mb-lg rounded-xl border border-[#FFAB00]/40 bg-[#FFAB00]/10 p-md"><div className="mb-sm flex flex-wrap items-center justify-between gap-sm"><div className="flex items-center gap-sm font-semibold text-[#974F0C]"><Icon>rate_review</Icon>Revision Required</div><span className="text-body-sm text-[#974F0C]">{task.revision_due_at ? `Due: ${new Date(task.revision_due_at).toLocaleString()}` : "No due date set"}</span></div><p className="text-body-md text-on-surface">{task.revision_notes || task.admin_remarks || task.manager_remarks || "Please revise the submitted work according to reviewer remarks."}</p><div className="mt-sm flex flex-wrap gap-md text-body-sm text-on-surface-variant"><span>Requested by: {requestedBy?.full_name || "Reviewer"}</span>{task.revision_requested_at && <span>Requested at: {new Date(task.revision_requested_at).toLocaleString()}</span>}{submission?.submission_url && <a className="font-semibold text-primary" href={submission.submission_url} target="_blank" rel="noreferrer">Previous submission link</a>}</div></div>;
 }
 
+function ForwardSummary({ summary }) {
+  if (!summary) return null;
+  return <div className="rounded-lg border border-primary/20 bg-primary/5 p-md"><h4 className="mb-sm font-semibold text-primary">Manager Forward Summary</h4><pre className="whitespace-pre-wrap font-sans text-body-sm text-on-surface-variant">{summary}</pre></div>;
+}
+
 function SubmitTask({ task }) {
   const data = useData();
   const { profile } = useAuth();
@@ -1450,8 +1469,9 @@ function AdminReviewPanel({ task }) {
       revision_requested_at: new Date().toISOString()
     } : {};
     if (profile.role === "manager" && status === "approved") {
+      const forwardSummary = buildManagerForwardSummary(task, data, managerRemarks);
       await data.saveProgress({ task_id: task.id, employee_id: task.student_id, progress_percent: 100, notes: managerRemarks || "Manager approved and forwarded to admin.", update_date: new Date().toISOString().slice(0, 10), created_at: new Date().toISOString() });
-      await data.saveTask({ ...task, status: "submitted", progress_percent: 100, final_forwarded_to_admin: true, manager_remarks: managerRemarks, manager_reviewed_at: new Date().toISOString() });
+      await data.saveTask({ ...task, status: "submitted", progress_percent: 100, final_forwarded_to_admin: true, manager_remarks: managerRemarks, manager_forward_summary: forwardSummary, manager_reviewed_at: new Date().toISOString() });
       notify("Task marked 100% complete and forwarded to admin.");
       return;
     }
@@ -1470,7 +1490,7 @@ function AdminReviewPanel({ task }) {
     await data.saveTask({ ...task, payment_status: "released" });
     notify("Payment released.");
   };
-  return <div className="space-y-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h3 className="text-h3 font-h3">Review Submission</h3>{submission ? <><Info label="Submission URL" value={<a className="text-primary" href={submission.submission_url} target="_blank" rel="noreferrer">{submission.submission_url}</a>} /><Info label="Time Spent" value={submission.time_spent} /><p className="rounded-lg bg-surface-container-low p-md text-body-md">{submission.notes}</p></> : task.final_forwarded_to_admin ? <p className="rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">Manager forwarded this task to admin review without a separate submission link.</p> : profile.role === "manager" ? <p className="rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">Review the employee progress and add manager remarks before forwarding to admin.</p> : <EmptyState title="No submission" body="Employee submission details will appear here." />}{task.manager_remarks && <Info label="Manager Remarks" value={task.manager_remarks} />}{profile.role === "manager" ? <TextAreaField label="Manager Remarks / Revision Fixes" value={managerRemarks} onChange={setManagerRemarks} placeholder="Write exactly what employee needs to fix before resubmitting..." /> : <><Field label="Rating" type="number" value={rating.rating} onChange={(value) => setRating({ ...rating, rating: value })} /><TextAreaField label="Admin Remarks / Revision Fixes" value={rating.remarks || task.admin_remarks || ""} onChange={(remarks) => setRating({ ...rating, remarks })} placeholder="Write exactly what needs to be fixed before resubmission..." /></>}<Field label="Revision Due Date" type="datetime-local" value={revisionDueAt} onChange={setRevisionDueAt} required={false} /><div className="grid grid-cols-1 gap-sm"><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={() => review("approved")}>{profile.role === "manager" ? "Approve 100% & Forward to Admin" : "Accept / Approve Work"}</button><button className="rounded-lg bg-[#FFAB00] px-4 py-2 text-on-surface" onClick={() => review("revision required")}>Send for Revision</button><button className="rounded-lg bg-error px-4 py-2 text-white" onClick={() => review("rejected")}>Reject Work</button></div>{profile.role === "admin" && <div className="mt-lg space-y-md rounded-lg border border-outline-variant/50 bg-surface-container-low p-md"><h4 className="font-semibold">Release Payment</h4><SelectField label="Payment Company" value={payment.method} onChange={(method) => setPayment({ ...payment, method })} options={["JazzCash", "EasyPaisa", "Bank Transfer", "Cash", "Other"]} /><Field label="Transaction Number" value={payment.transaction_number} onChange={(transaction_number) => setPayment({ ...payment, transaction_number })} required={false} /><label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Payment Screenshot (max 100KB)</span><input className="rounded-lg border border-outline-variant bg-surface px-md py-2" type="file" accept="image/*" onChange={(e) => setPayment({ ...payment, file: e.target.files?.[0] })} /></label><button className="w-full rounded-lg bg-primary px-4 py-2 text-white" onClick={releasePayment} type="button">Release Payment</button></div>}</div>;
+  return <div className="space-y-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h3 className="text-h3 font-h3">Review Submission</h3>{submission ? <><Info label="Submission URL" value={<a className="text-primary" href={submission.submission_url} target="_blank" rel="noreferrer">{submission.submission_url}</a>} /><Info label="Time Spent" value={submission.time_spent} /><p className="rounded-lg bg-surface-container-low p-md text-body-md">{submission.notes}</p></> : task.final_forwarded_to_admin ? <p className="rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">Manager forwarded this task to admin review without a separate submission link.</p> : profile.role === "manager" ? <p className="rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant">Review the employee progress and add manager remarks before forwarding to admin.</p> : <EmptyState title="No submission" body="Employee submission details will appear here." />}{task.manager_forward_summary && <ForwardSummary summary={task.manager_forward_summary} />}{task.manager_remarks && <Info label="Manager Remarks" value={task.manager_remarks} />}{profile.role === "manager" ? <TextAreaField label="Manager Remarks / Revision Fixes" value={managerRemarks} onChange={setManagerRemarks} placeholder="Write exactly what employee needs to fix before resubmitting..." /> : <><Field label="Rating" type="number" value={rating.rating} onChange={(value) => setRating({ ...rating, rating: value })} /><TextAreaField label="Admin Remarks / Revision Fixes" value={rating.remarks || task.admin_remarks || ""} onChange={(remarks) => setRating({ ...rating, remarks })} placeholder="Write exactly what needs to be fixed before resubmission..." /></>}<Field label="Revision Due Date" type="datetime-local" value={revisionDueAt} onChange={setRevisionDueAt} required={false} /><div className="grid grid-cols-1 gap-sm"><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={() => review("approved")}>{profile.role === "manager" ? "Approve 100% & Forward to Admin" : "Accept / Approve Work"}</button><button className="rounded-lg bg-[#FFAB00] px-4 py-2 text-on-surface" onClick={() => review("revision required")}>Send for Revision</button><button className="rounded-lg bg-error px-4 py-2 text-white" onClick={() => review("rejected")}>Reject Work</button></div>{profile.role === "admin" && <div className="mt-lg space-y-md rounded-lg border border-outline-variant/50 bg-surface-container-low p-md"><h4 className="font-semibold">Release Payment</h4><SelectField label="Payment Company" value={payment.method} onChange={(method) => setPayment({ ...payment, method })} options={["JazzCash", "EasyPaisa", "Bank Transfer", "Cash", "Other"]} /><Field label="Transaction Number" value={payment.transaction_number} onChange={(transaction_number) => setPayment({ ...payment, transaction_number })} required={false} /><label className="flex flex-col gap-xs"><span className="text-label-bold font-label-bold">Payment Screenshot (max 100KB)</span><input className="rounded-lg border border-outline-variant bg-surface px-md py-2" type="file" accept="image/*" onChange={(e) => setPayment({ ...payment, file: e.target.files?.[0] })} /></label><button className="w-full rounded-lg bg-primary px-4 py-2 text-white" onClick={releasePayment} type="button">Release Payment</button></div>}</div>;
 }
 
 function SubmissionsPage() {
@@ -1620,6 +1640,49 @@ function ManagerInboxSection({ title, icon, empty, children }) {
 function ManagerInboxRow({ task, employee, project, note, actionLabel }) {
   const progress = getLatestTaskProgress(task, useData().progressUpdates);
   return <div className="grid grid-cols-1 items-center gap-md border-t border-outline-variant/30 p-md md:grid-cols-[1.3fr_1fr_1fr_1fr_1.2fr_auto]"><div><button className="font-semibold text-primary" onClick={() => navigate(`/manager/tasks/${task.id}`)} type="button">{task.task_title}</button><p className="text-body-sm text-on-surface-variant">{task.task_type}</p></div><div><p>{employee?.full_name || "-"}</p><p className="text-body-sm text-on-surface-variant">{employee?.email || ""}</p></div><ProjectTag project={project} /><div><div className="mb-1 text-body-sm">{progress}%</div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} /></div></div><p className="line-clamp-2 text-body-sm text-on-surface-variant">{note}</p><div className="flex items-center justify-end gap-sm"><StatusBadge status={task.status} /><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/manager/tasks/${task.id}`)} type="button">{actionLabel}</button></div></div>;
+}
+
+function ManagerTeamPerformance() {
+  const { profile } = useAuth();
+  const data = useData();
+  const teamTasks = data.tasks.filter((task) => task.manager_id === profile.id || task.assigned_by === profile.id);
+  const employeeIds = [...new Set(teamTasks.map((task) => task.student_id).filter(Boolean))];
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const rows = employeeIds.map((employeeId) => {
+    const employee = data.profiles.find((person) => person.id === employeeId);
+    const tasks = teamTasks.filter((task) => task.student_id === employeeId);
+    const avgProgress = tasks.length ? Math.round(tasks.reduce((sum, task) => sum + getLatestTaskProgress(task, data.progressUpdates), 0) / tasks.length) : 0;
+    const submitted = tasks.filter((task) => String(task.status).toLowerCase() === "submitted").length;
+    const revisions = tasks.filter((task) => String(task.status).toLowerCase() === "revision required").length;
+    const late = tasks.filter((task) => task.deadline && new Date(task.deadline) < new Date() && !["done", "approved", "rejected"].includes(String(task.status).toLowerCase())).length;
+    const completedThisWeek = tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase()) && new Date(task.updated_at || task.created_at) >= startOfWeek).length;
+    return { employee, tasks, avgProgress, submitted, revisions, late, completedThisWeek };
+  });
+  const teamAvgProgress = rows.length ? Math.round(rows.reduce((sum, row) => sum + row.avgProgress, 0) / rows.length) : 0;
+  return (
+    <Shell role="manager" title="Team Performance">
+      <div className="mx-auto max-w-7xl space-y-lg">
+        <div className="grid grid-cols-1 gap-md md:grid-cols-5">
+          <Card title="Employees" value={rows.length} meta="In your team" icon="group" />
+          <Card title="Assigned Tasks" value={teamTasks.length} meta="Total workload" icon="assignment" />
+          <Card title="Avg Progress" value={`${teamAvgProgress}%`} meta="Team average" icon="trending_up" />
+          <Card title="Revision Count" value={rows.reduce((sum, row) => sum + row.revisions, 0)} meta="Needs fixes" icon="rate_review" accent="text-[#FFAB00]" />
+          <Card title="Late Tasks" value={rows.reduce((sum, row) => sum + row.late, 0)} meta="Past deadline" icon="warning" accent="text-error" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1">
+          <div className="overflow-x-auto">
+            <table className="sheet-table">
+              <thead><tr><th>Employee</th><th>Contact</th><th>Assigned Tasks</th><th>Average Progress</th><th>Submitted</th><th>Revision Count</th><th>Late Tasks</th><th>Completed This Week</th><th className="text-right">Action</th></tr></thead>
+              <tbody>{rows.map((row) => <tr key={row.employee?.id || row.tasks[0]?.student_id}><td><div className="font-semibold">{row.employee?.full_name || "Employee"}</div><div className="text-body-sm text-on-surface-variant">ID: {(row.employee?.id || "").slice(0, 8)}</div></td><td><div>{row.employee?.email || "-"}</div><div className="text-body-sm text-on-surface-variant">{row.employee?.phone || "-"}</div></td><td>{row.tasks.length}</td><td><div className="min-w-[120px]"><div className="mb-1 text-body-sm">{row.avgProgress}%</div><div className="h-1.5 rounded-full bg-surface-container-high"><div className="h-full rounded-full bg-primary" style={{ width: `${row.avgProgress}%` }} /></div></div></td><td>{row.submitted}</td><td>{row.revisions}</td><td>{row.late}</td><td>{row.completedThisWeek}</td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate("/manager/tasks")} type="button">View Tasks</button></td></tr>)}</tbody>
+            </table>
+          </div>
+          {!rows.length && <div className="p-lg"><EmptyState title="No team performance yet" body="Assign tasks to employees to see performance metrics here." /></div>}
+        </div>
+      </div>
+    </Shell>
+  );
 }
 
 function ManagerTasksPage() {
@@ -1804,6 +1867,7 @@ function AppRouter() {
   if (path === "/manager/dashboard") return <Guard role="manager"><ManagerDashboard /></Guard>;
   if (path === "/manager/inbox") return <Guard role="manager"><ManagerReviewInbox /></Guard>;
   if (path === "/manager/tasks") return <Guard role="manager"><ManagerTasksPage /></Guard>;
+  if (path === "/manager/performance") return <Guard role="manager"><ManagerTeamPerformance /></Guard>;
   if (path.startsWith("/manager/tasks/")) return <Guard role="manager"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/manager/submissions") return <Guard role="manager"><ManagerSubmissionsPage /></Guard>;
   if (path === "/manager/settings") return <Guard role="manager"><SettingsPage role="manager" /></Guard>;
