@@ -632,7 +632,7 @@ function LoginPage({ role }) {
   const { signIn, profile, loading: authLoading } = useAuth();
   const notify = useToast();
   const roleLabel = role === "admin" ? "Admin" : role === "manager" ? "Manager" : "Employee";
-  const [form, setForm] = useState({ email: role === "admin" ? "admin@seotaskflow.com" : role === "manager" ? "manager@example.com" : "s.jenkins@example.com", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const submit = async (event) => {
     event.preventDefault();
@@ -670,7 +670,7 @@ function LoginPage({ role }) {
           <div className="mb-lg"><h2 className="text-h3 font-h3 text-on-surface">{isAdmin ? "Sign In" : `${roleLabel} Portal`}</h2><p className="mt-xs text-body-sm text-on-surface-variant">Enter your credentials to continue.</p></div>
           <form className="flex flex-col gap-md" onSubmit={submit}>
             <Field label="Email Address" icon="mail" type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} placeholder={`${role}@example.com`} />
-            <Field label="Password" icon="lock" type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} placeholder="••••••••" />
+            <Field label="Password" icon="lock" type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} placeholder="Enter your password" />
             <button className="mt-sm flex w-full items-center justify-center gap-sm rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-on-primary shadow-sm transition-all hover:bg-primary-fixed-variant disabled:opacity-60" disabled={loading} type="submit">
               {loading ? "Signing in..." : `Login as ${roleLabel}`} <Icon className="text-lg">arrow_forward</Icon>
             </button>
