@@ -59,8 +59,23 @@ create table if not exists public.payments (
   released_at timestamptz default now()
 );
 
+create table if not exists public.attendance_records (
+  id uuid primary key default gen_random_uuid(),
+  employee_id uuid references public.profiles(id) on delete cascade,
+  attendance_date date not null default current_date,
+  check_in_at timestamptz,
+  check_out_at timestamptz,
+  work_minutes integer default 0 check (work_minutes >= 0),
+  status text default 'present' check (status in ('present', 'late', 'absent')),
+  notes text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique (employee_id, attendance_date)
+);
+
 alter table public.task_progress_updates enable row level security;
 alter table public.payments enable row level security;
+alter table public.attendance_records enable row level security;
 
 create or replace function public.is_admin()
 returns boolean
@@ -174,6 +189,27 @@ for select using (
 drop policy if exists "payments admin write" on public.payments;
 create policy "payments admin write" on public.payments
 for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "attendance read assigned chain" on public.attendance_records;
+create policy "attendance read assigned chain" on public.attendance_records
+for select using (
+  public.is_admin()
+  or employee_id = auth.uid()
+  or exists (
+    select 1 from public.tasks
+    where tasks.student_id = attendance_records.employee_id
+    and (tasks.manager_id = auth.uid() or tasks.assigned_by = auth.uid())
+  )
+);
+
+drop policy if exists "attendance employee insert own" on public.attendance_records;
+create policy "attendance employee insert own" on public.attendance_records
+for insert with check (employee_id = auth.uid() or public.is_admin());
+
+drop policy if exists "attendance employee update own" on public.attendance_records;
+create policy "attendance employee update own" on public.attendance_records
+for update using (employee_id = auth.uid() or public.is_admin())
+with check (employee_id = auth.uid() or public.is_admin());
 
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('payment-proofs', 'payment-proofs', true, 102400)

@@ -37,6 +37,11 @@ const demoProgressUpdates = [
 const demoPayments = [
   { id: "payment-1", task_id: "task-3", employee_id: "demo-employee-3", released_by: "demo-admin", amount: 3200, method: "JazzCash", transaction_number: "JC-928811", screenshot_url: "", status: "released", released_at: new Date().toISOString() }
 ];
+const demoAttendance = [
+  { id: "attendance-1", employee_id: "demo-employee-1", attendance_date: new Date().toISOString().slice(0, 10), check_in_at: `${new Date().toISOString().slice(0, 10)}T09:12:00`, check_out_at: "", status: "late", notes: "Client call before check-in.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: "attendance-2", employee_id: "demo-employee-3", attendance_date: new Date().toISOString().slice(0, 10), check_in_at: `${new Date().toISOString().slice(0, 10)}T08:55:00`, check_out_at: `${new Date().toISOString().slice(0, 10)}T17:20:00`, status: "present", notes: "", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: "attendance-3", employee_id: "demo-employee-1", attendance_date: new Date(Date.now() - 86400000).toISOString().slice(0, 10), check_in_at: `${new Date(Date.now() - 86400000).toISOString().slice(0, 10)}T09:00:00`, check_out_at: `${new Date(Date.now() - 86400000).toISOString().slice(0, 10)}T18:05:00`, status: "present", notes: "", created_at: new Date(Date.now() - 86400000).toISOString(), updated_at: new Date(Date.now() - 86400000).toISOString() }
+];
 
 const AuthContext = createContext(null);
 const DataContext = createContext(null);
@@ -172,22 +177,24 @@ function DataProvider({ children }) {
   const [ratings, setRatings] = useState(demoRatings);
   const [progressUpdates, setProgressUpdates] = useState(demoProgressUpdates);
   const [payments, setPayments] = useState(demoPayments);
+  const [attendanceRecords, setAttendanceRecords] = useState(demoAttendance);
   const [loading, setLoading] = useState(false);
 
   const refresh = async () => {
     if (!isSupabaseConfigured || !profile) return;
     setLoading(true);
-    const [p, pr, t, s, r, u, pay] = await Promise.all([
+    const [p, pr, t, s, r, u, pay, att] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
       supabase.from("submissions").select("*").order("submitted_at", { ascending: false }),
       supabase.from("ratings").select("*").order("created_at", { ascending: false }),
       supabase.from("task_progress_updates").select("*").order("created_at", { ascending: false }),
-      supabase.from("payments").select("*").order("released_at", { ascending: false })
+      supabase.from("payments").select("*").order("released_at", { ascending: false }),
+      supabase.from("attendance_records").select("*").order("attendance_date", { ascending: false })
     ]);
     setLoading(false);
-    if (p.error || pr.error || t.error || s.error || r.error || u.error || pay.error) {
+    if (p.error || pr.error || t.error || s.error || r.error || u.error || pay.error || att.error) {
       notify("Could not load Supabase data. Check schema and RLS policies.", "error");
       return;
     }
@@ -198,6 +205,7 @@ function DataProvider({ children }) {
     setRatings(r.data || []);
     setProgressUpdates(u.data || []);
     setPayments(pay.data || []);
+    setAttendanceRecords(att.data || []);
   };
 
   useEffect(() => {
@@ -209,6 +217,7 @@ function DataProvider({ children }) {
       setRatings([]);
       setProgressUpdates([]);
       setPayments([]);
+      setAttendanceRecords([]);
       return;
     }
     refresh();
@@ -284,6 +293,7 @@ function DataProvider({ children }) {
     ratings,
     progressUpdates,
     payments,
+    attendanceRecords,
     loading,
     refresh,
     saveProject: (row) => upsertRow("projects", row, setProjects),
@@ -294,6 +304,7 @@ function DataProvider({ children }) {
     saveRating: (row) => upsertRow("ratings", row, setRatings),
     saveProgress: (row) => upsertRow("task_progress_updates", row, setProgressUpdates),
     savePayment: (row) => upsertRow("payments", row, setPayments),
+    saveAttendance: (row) => upsertRow("attendance_records", { ...row, updated_at: new Date().toISOString() }, setAttendanceRecords),
     deleteProject: (id) => deleteRow("projects", id, setProjects),
     deleteTask: (id) => deleteRow("tasks", id, setTasks),
     deleteProfile: (id) => deleteRow("profiles", id, setProfiles),
@@ -346,6 +357,74 @@ function getLatestTaskProgress(task, progressUpdates) {
   return Number(updates[0]?.progress_percent ?? task.progress_percent ?? 0);
 }
 
+function toDateKey(date = new Date()) {
+  return new Date(date).toISOString().slice(0, 10);
+}
+
+function toDateInputValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+}
+
+function toTimeInputValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toTimeString().slice(0, 5);
+}
+
+function buildLocalDateTime(dateValue, timeValue) {
+  if (!dateValue) return "";
+  return new Date(`${dateValue}T${timeValue || "23:59"}:00`).toISOString();
+}
+
+function minutesBetween(start, end) {
+  if (!start || !end) return 0;
+  const diff = new Date(end) - new Date(start);
+  return Number.isFinite(diff) && diff > 0 ? Math.round(diff / 60000) : 0;
+}
+
+function formatWorkMinutes(minutes) {
+  if (!minutes) return "-";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${String(mins).padStart(2, "0")}m`;
+}
+
+function attendanceStatusFor(checkInAt, lateAfter = "09:15") {
+  if (!checkInAt) return "absent";
+  const checkIn = new Date(checkInAt);
+  const [hour, minute] = lateAfter.split(":").map(Number);
+  const limit = new Date(checkIn);
+  limit.setHours(hour || 9, minute || 15, 0, 0);
+  return checkIn > limit ? "late" : "present";
+}
+
+function getAttendanceRows(data, { role, profile, filters = {} }) {
+  const employees = data.profiles.filter((person) => {
+    if (person.role !== "employee") return false;
+    if (role === "manager") {
+      return data.tasks.some((task) => (task.manager_id === profile.id || task.assigned_by === profile.id) && task.student_id === person.id);
+    }
+    if (role === "employee") return person.id === profile.id;
+    return true;
+  });
+  const from = filters.from || "";
+  const to = filters.to || "";
+  return data.attendanceRecords
+    .filter((record) => employees.some((employee) => employee.id === record.employee_id))
+    .filter((record) => !filters.employee || record.employee_id === filters.employee)
+    .filter((record) => !filters.status || record.status === filters.status)
+    .filter((record) => !from || record.attendance_date >= from)
+    .filter((record) => !to || record.attendance_date <= to)
+    .sort((a, b) => new Date(b.attendance_date || b.created_at) - new Date(a.attendance_date || a.created_at))
+    .map((record) => ({
+      ...record,
+      employee: employees.find((employee) => employee.id === record.employee_id),
+      workMinutes: Number(record.work_minutes ?? minutesBetween(record.check_in_at, record.check_out_at))
+    }));
+}
+
 function buildManagerForwardSummary(task, data, remarks) {
   const employee = data.profiles.find((person) => person.id === task.student_id);
   const submission = data.submissions.find((item) => item.task_id === task.id);
@@ -389,7 +468,10 @@ function StatusBadge({ status }) {
     "revision required": "bg-[#FFAB00]/10 text-[#974F0C] border-[#FFAB00]/20",
     done: "bg-[#36B37E]/10 text-[#006c47] border-[#36B37E]/20",
     active: "bg-[#36B37E]/10 text-[#006c47] border-[#36B37E]/20",
-    inactive: "bg-[#7A869A]/10 text-[#5E6C84] border-[#7A869A]/20"
+    inactive: "bg-[#7A869A]/10 text-[#5E6C84] border-[#7A869A]/20",
+    present: "bg-[#36B37E]/10 text-[#006c47] border-[#36B37E]/20",
+    late: "bg-[#FFAB00]/10 text-[#974F0C] border-[#FFAB00]/20",
+    absent: "bg-[#DE350B]/10 text-[#DE350B] border-[#DE350B]/20"
   };
   return <span className={`inline-flex items-center rounded-md border px-2 py-1 text-label-bold font-label-bold capitalize ${map[key] || map.pending}`}><span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current" />{key}</span>;
 }
@@ -610,12 +692,14 @@ function Field({ label, value, onChange, type = "text", placeholder, icon, requi
 }
 
 function SelectField({ label, value, onChange, options }) {
+  const getValue = (option) => (typeof option === "object" ? option.value : option);
+  const getLabel = (option) => (typeof option === "object" ? option.label : option);
   return (
     <label className="flex flex-col gap-xs">
       <span className="text-label-bold font-label-bold text-on-surface">{label}</span>
       <select className="w-full rounded-lg border border-outline-variant bg-surface px-md py-[10px] text-body-md text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" value={value || ""} onChange={(e) => onChange(e.target.value)}>
         <option value="">Select</option>
-        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+        {options.map((option) => <option key={getValue(option)} value={getValue(option)}>{getLabel(option)}</option>)}
       </select>
     </label>
   );
@@ -893,6 +977,7 @@ function Shell({ role, title, children }) {
     ["/admin/dashboard", "dashboard", "Dashboard"],
     ["/admin/inbox", "inbox", "Review Inbox"],
     ["/admin/employees", "group", "Employees"],
+    ["/admin/attendance", "schedule", "Attendance"],
     ["/admin/tasks", "assignment", "Task Management"],
     ["/admin/submissions", "send_and_archive", "Submissions"],
     ["/admin/payments", "payments", "Payments"],
@@ -904,11 +989,13 @@ function Shell({ role, title, children }) {
     ["/manager/dashboard", "dashboard", "Dashboard"],
     ["/manager/inbox", "inbox", "Review Inbox"],
     ["/manager/tasks", "assignment", "Team Tasks"],
+    ["/manager/attendance", "schedule", "Attendance"],
     ["/manager/performance", "trending_up", "Team Performance"],
     ["/manager/submissions", "send_and_archive", "Submissions"],
     ["/manager/settings", "settings", "Settings"]
   ] : [
     ["/employee/dashboard", "dashboard", "Dashboard"],
+    ["/employee/attendance", "schedule", "Attendance"],
     ["/employee/tasks", "assignment", "My Tasks"],
     ["/employee/performance", "trending_up", "Performance"],
     ["/employee/settings", "settings", "Settings"]
@@ -1078,6 +1165,9 @@ function StudentsPage() {
   const data = useData();
   const notify = useToast();
   const [filters, setFilters] = useState({ search: "", role: "", status: "" });
+  const [showAddForm, setShowAddForm] = useState(false);
+  const emptyEmployee = { full_name: "", email: "", phone: "", password: "", role: "employee", status: "approved", skill_level: "beginner", message: "Added by admin" };
+  const [newEmployee, setNewEmployee] = useState(emptyEmployee);
   const employees = data.profiles
     .filter((p) => ["employee", "manager"].includes(p.role))
     .filter((p) => {
@@ -1109,9 +1199,68 @@ function StudentsPage() {
     const nextStatus = person.status === "approved" ? "inactive" : "approved";
     await approve(person, nextStatus);
   };
+  const addEmployee = async (event) => {
+    event.preventDefault();
+    try {
+      if (!newEmployee.full_name || !newEmployee.email) throw new Error("Name and email are required.");
+      if (isSupabaseConfigured && newEmployee.password.length < 6) throw new Error("Password must be at least 6 characters.");
+      if (isSupabaseConfigured) {
+        const { data: signupData, error: signupError } = await supabase.auth.signUp({
+          email: newEmployee.email,
+          password: newEmployee.password,
+          options: {
+            data: {
+              full_name: newEmployee.full_name,
+              phone: newEmployee.phone,
+              role: newEmployee.role,
+              status: newEmployee.status,
+              skill_level: newEmployee.skill_level,
+              message: newEmployee.message
+            }
+          }
+        });
+        if (signupError) throw signupError;
+        if (!signupData.user?.id) throw new Error("Could not create auth user.");
+        await data.saveProfile({
+          id: signupData.user.id,
+          full_name: newEmployee.full_name,
+          email: newEmployee.email,
+          phone: newEmployee.phone,
+          role: newEmployee.role,
+          status: newEmployee.status,
+          skill_level: newEmployee.skill_level,
+          message: newEmployee.message,
+          created_at: new Date().toISOString()
+        });
+      } else {
+        await data.saveProfile({ id: crypto.randomUUID(), ...newEmployee, password: undefined, created_at: new Date().toISOString() });
+      }
+      setNewEmployee(emptyEmployee);
+      setShowAddForm(false);
+      notify("Employee added.");
+    } catch (error) {
+      notify(error.message, "error");
+    }
+  };
   return (
     <Shell role="admin" title="Employees">
-      <div className="mb-lg flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h1 className="text-h1 font-h1">Employees</h1><p className="mt-1 text-body-md text-on-surface-variant">Manage employees, promote managers, track progress, and review submissions.</p></div><button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-bold font-label-bold text-on-primary shadow-sm"><Icon className="text-[18px]">add</Icon>Add Employee</button></div>
+      <div className="mb-lg flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h1 className="text-h1 font-h1">Employees</h1><p className="mt-1 text-body-md text-on-surface-variant">Manage employees, promote managers, track progress, and review submissions.</p></div><button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-bold font-label-bold text-on-primary shadow-sm" onClick={() => setShowAddForm((current) => !current)} type="button"><Icon className="text-[18px]">{showAddForm ? "close" : "add"}</Icon>{showAddForm ? "Close" : "Add Employee"}</button></div>
+      {showAddForm && (
+        <form className="mb-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={addEmployee}>
+          <h2 className="mb-md text-h3 font-h3">Add Employee Manually</h2>
+          <div className="grid grid-cols-1 gap-md md:grid-cols-3">
+            <Field label="Full Name" value={newEmployee.full_name} onChange={(full_name) => setNewEmployee({ ...newEmployee, full_name })} />
+            <Field label="Email" type="email" value={newEmployee.email} onChange={(email) => setNewEmployee({ ...newEmployee, email })} />
+            <Field label="Phone" value={newEmployee.phone} onChange={(phone) => setNewEmployee({ ...newEmployee, phone })} required={false} />
+            <Field label="Password" type="password" value={newEmployee.password} onChange={(password) => setNewEmployee({ ...newEmployee, password })} required={isSupabaseConfigured} />
+            <SelectField label="Role" value={newEmployee.role} onChange={(role) => setNewEmployee({ ...newEmployee, role })} options={["employee", "manager"]} />
+            <SelectField label="Status" value={newEmployee.status} onChange={(status) => setNewEmployee({ ...newEmployee, status })} options={[{ value: "approved", label: "Active" }, { value: "pending", label: "Pending" }, { value: "inactive", label: "Inactive" }]} />
+            <Field label="Skill Level" value={newEmployee.skill_level} onChange={(skill_level) => setNewEmployee({ ...newEmployee, skill_level })} required={false} />
+            <Field label="Notes" value={newEmployee.message} onChange={(message) => setNewEmployee({ ...newEmployee, message })} required={false} />
+            <button className="self-end rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-white" type="submit">Save Employee</button>
+          </div>
+        </form>
+      )}
       <div className="mb-md grid grid-cols-1 gap-md rounded-xl border border-outline-variant/50 bg-surface p-md shadow-level-1 md:grid-cols-4">
         <label className="relative md:col-span-2">
           <Icon className="absolute left-md top-1/2 -translate-y-1/2 text-[18px] text-outline">search</Icon>
@@ -1328,6 +1477,8 @@ function TaskForm({ initial = {}, onSave, managerMode = false }) {
   const employees = profiles.filter((p) => p.role === "employee" && p.status === "approved");
   const managers = profiles.filter((p) => p.role === "manager" && p.status === "approved");
   const [form, setForm] = useState({ priority: "Medium", status: "pending", ...initial });
+  const deadlineDate = toDateInputValue(form.deadline);
+  const deadlineTime = toTimeInputValue(form.deadline);
   const submitTask = (event) => {
     event.preventDefault();
     const payload = {
@@ -1342,7 +1493,27 @@ function TaskForm({ initial = {}, onSave, managerMode = false }) {
     onSave(payload);
     setForm({ priority: "Medium", status: "pending" });
   };
-  return <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={submitTask}><Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} /><SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} /><PersonSearchField people={employees} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} />{!managerMode && <PersonSearchField people={managers} value={form.manager_id} onChange={(manager_id) => setForm({ ...form, manager_id })} label="Assign Manager (Optional)" placeholder="Type manager name or email..." />}<ProjectSearchField projects={projects} value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} /><Field label="Payment Amount" type="number" value={form.payment_amount} onChange={(payment_amount) => setForm({ ...form, payment_amount })} required={false} /><Field label="Week Start" type="date" value={form.week_start || ""} onChange={(week_start) => setForm({ ...form, week_start })} required={false} /><Field label="Week End" type="date" value={form.week_end || ""} onChange={(week_end) => setForm({ ...form, week_end })} required={false} /><Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} /><Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} /><Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} /><Field label="Deadline" type="datetime-local" value={form.deadline?.slice(0, 16)} onChange={(deadline) => setForm({ ...form, deadline: new Date(deadline).toISOString() })} /><SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} /><SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} /><div className="md:col-span-2"><RichTextEditor label="Instructions" value={form.instructions || ""} onChange={(instructions) => setForm({ ...form, instructions })} /></div><button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Weekly Task</button></form>;
+  return (
+    <form className="grid grid-cols-1 gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:grid-cols-2" onSubmit={submitTask}>
+      <Field label="Task Title" value={form.task_title} onChange={(task_title) => setForm({ ...form, task_title })} />
+      <SelectField label="Task Type" value={form.task_type} onChange={(task_type) => setForm({ ...form, task_type })} options={taskTypes} />
+      <PersonSearchField people={employees} value={form.student_id} onChange={(student_id) => setForm({ ...form, student_id })} />
+      {!managerMode && <PersonSearchField people={managers} value={form.manager_id} onChange={(manager_id) => setForm({ ...form, manager_id })} label="Assign Manager (Optional)" placeholder="Type manager name or email..." />}
+      <ProjectSearchField projects={projects} value={form.project_id} onChange={(project_id) => setForm({ ...form, project_id })} />
+      <Field label="Payment Amount" type="number" value={form.payment_amount} onChange={(payment_amount) => setForm({ ...form, payment_amount })} required={false} />
+      <Field label="Week Start" type="date" value={form.week_start || ""} onChange={(week_start) => setForm({ ...form, week_start })} required={false} />
+      <Field label="Week End" type="date" value={form.week_end || ""} onChange={(week_end) => setForm({ ...form, week_end })} required={false} />
+      <Field label="Target URL" value={form.target_url} onChange={(target_url) => setForm({ ...form, target_url })} />
+      <Field label="Posting URL" value={form.posting_url} onChange={(posting_url) => setForm({ ...form, posting_url })} required={false} />
+      <Field label="Approx Time" value={form.approx_time} onChange={(approx_time) => setForm({ ...form, approx_time })} />
+      <Field label="Deadline Date" type="date" value={deadlineDate} onChange={(date) => setForm({ ...form, deadline: buildLocalDateTime(date, deadlineTime) })} />
+      <Field label="Deadline Time" type="time" value={deadlineTime || "23:59"} onChange={(time) => setForm({ ...form, deadline: buildLocalDateTime(deadlineDate, time) })} required={false} />
+      <SelectField label="Priority" value={form.priority} onChange={(priority) => setForm({ ...form, priority })} options={priorities} />
+      <SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={statusLabels} />
+      <div className="md:col-span-2"><RichTextEditor label="Instructions" value={form.instructions || ""} onChange={(instructions) => setForm({ ...form, instructions })} /></div>
+      <button className="rounded-lg bg-primary px-4 py-3 text-label-bold font-label-bold text-on-primary md:col-span-2">Save Weekly Task</button>
+    </form>
+  );
 }
 
 function TasksPage() {
@@ -1714,6 +1885,171 @@ function EmployeeTasksPage() {
   return <Shell role="employee" title="My Tasks"><TasksTable studentId={profile.id} /></Shell>;
 }
 
+function AttendancePage({ role }) {
+  const { profile } = useAuth();
+  const data = useData();
+  const notify = useToast();
+  const today = toDateKey();
+  const visibleEmployees = data.profiles.filter((person) => {
+    if (person.role !== "employee") return false;
+    if (role === "manager") return data.tasks.some((task) => (task.manager_id === profile.id || task.assigned_by === profile.id) && task.student_id === person.id);
+    if (role === "employee") return person.id === profile.id;
+    return true;
+  });
+  const emptyFilters = { employee: role === "employee" ? profile.id : "", status: "", from: "", to: "" };
+  const [filters, setFilters] = useState(emptyFilters);
+  const [manual, setManual] = useState({ employee_id: visibleEmployees[0]?.id || "", attendance_date: today, check_in_time: "09:00", check_out_time: "18:00", status: "present", notes: "" });
+  useEffect(() => {
+    if (role === "admin" && !visibleEmployees.some((employee) => employee.id === manual.employee_id)) {
+      setManual((current) => ({ ...current, employee_id: visibleEmployees[0]?.id || "" }));
+    }
+  }, [role, visibleEmployees.map((employee) => employee.id).join(","), manual.employee_id]);
+  const rows = getAttendanceRows(data, { role, profile, filters });
+  const visibleEmployeeOptions = visibleEmployees.map((employee) => ({ value: employee.id, label: employee.full_name || employee.email || employee.id }));
+  const todayRecord = data.attendanceRecords.find((record) => record.employee_id === profile.id && record.attendance_date === today);
+  const present = rows.filter((row) => row.status === "present").length;
+  const late = rows.filter((row) => row.status === "late").length;
+  const absent = rows.filter((row) => row.status === "absent").length;
+  const totalMinutes = rows.reduce((sum, row) => sum + row.workMinutes, 0);
+
+  const saveEmployeeCheck = async (type) => {
+    try {
+      const now = new Date();
+      const existing = data.attendanceRecords.find((record) => record.employee_id === profile.id && record.attendance_date === today);
+      if (type === "in" && existing?.check_in_at) throw new Error("You already checked in today.");
+      if (type === "out" && !existing?.check_in_at) throw new Error("Check in first.");
+      const next = type === "in"
+        ? { ...(existing || {}), employee_id: profile.id, attendance_date: today, check_in_at: now.toISOString(), status: attendanceStatusFor(now.toISOString()), notes: existing?.notes || "" }
+        : { ...existing, check_out_at: now.toISOString(), work_minutes: minutesBetween(existing.check_in_at, now.toISOString()) };
+      await data.saveAttendance(next);
+      notify(type === "in" ? "Check-in recorded." : "Check-out recorded.");
+    } catch (error) {
+      notify(error.message, "error");
+    }
+  };
+
+  const saveManualAttendance = async (event) => {
+    event.preventDefault();
+    try {
+      if (!manual.employee_id) throw new Error("Select an employee.");
+      const checkInAt = manual.status === "absent" ? "" : `${manual.attendance_date}T${manual.check_in_time}:00`;
+      const checkOutAt = manual.status === "absent" || !manual.check_out_time ? "" : `${manual.attendance_date}T${manual.check_out_time}:00`;
+      const existing = data.attendanceRecords.find((record) => record.employee_id === manual.employee_id && record.attendance_date === manual.attendance_date);
+      await data.saveAttendance({
+        ...(existing || {}),
+        employee_id: manual.employee_id,
+        attendance_date: manual.attendance_date,
+        check_in_at: checkInAt,
+        check_out_at: checkOutAt,
+        work_minutes: minutesBetween(checkInAt, checkOutAt),
+        status: manual.status === "present" && checkInAt ? attendanceStatusFor(checkInAt) : manual.status,
+        notes: manual.notes
+      });
+      notify("Attendance saved.");
+    } catch (error) {
+      notify(error.message, "error");
+    }
+  };
+
+  const exportAttendancePdf = () => {
+    const doc = new jsPDF({ orientation: "landscape" });
+    doc.text("Attendance Report", 14, 14);
+    autoTable(doc, {
+      head: [["Employee", "Date", "Check In", "Check Out", "Work Hours", "Status", "Notes"]],
+      body: rows.map((row) => [row.employee?.full_name || "-", row.attendance_date, row.check_in_at ? new Date(row.check_in_at).toLocaleTimeString() : "-", row.check_out_at ? new Date(row.check_out_at).toLocaleTimeString() : "-", formatWorkMinutes(row.workMinutes), row.status, row.notes || ""]),
+      startY: 20,
+      styles: { fontSize: 9 }
+    });
+    doc.save("attendance-report.pdf");
+    notify("Attendance PDF generated.");
+  };
+
+  const exportAttendanceExcel = () => {
+    const headers = ["Employee", "Date", "Check In", "Check Out", "Work Hours", "Status", "Notes"];
+    const body = rows.map((row) => [row.employee?.full_name || "-", row.attendance_date, row.check_in_at ? new Date(row.check_in_at).toLocaleTimeString() : "-", row.check_out_at ? new Date(row.check_out_at).toLocaleTimeString() : "-", formatWorkMinutes(row.workMinutes), row.status, row.notes || ""]);
+    const csv = [headers, ...body].map((line) => line.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "attendance-report.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+    notify("Attendance CSV generated.");
+  };
+
+  return (
+    <Shell role={role} title="Attendance">
+      <div className="mx-auto max-w-7xl space-y-lg">
+        <div className="grid grid-cols-1 gap-md md:grid-cols-4">
+          <Card title="Present" value={present} meta="On-time records" icon="check_circle" accent="text-secondary" />
+          <Card title="Late Arrivals" value={late} meta="After 9:15 AM" icon="schedule" accent="text-[#FFAB00]" />
+          <Card title="Absents" value={absent} meta="Marked absent" icon="cancel" accent="text-error" />
+          <Card title="Work Hours" value={formatWorkMinutes(totalMinutes)} meta="Filtered total" icon="timer" />
+        </div>
+        {role === "employee" && (
+          <div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1">
+            <div className="flex flex-col justify-between gap-md md:flex-row md:items-center">
+              <div>
+                <h2 className="text-h3 font-h3">Today</h2>
+                <p className="mt-1 text-body-md text-on-surface-variant">Check in, check out, and see calculated work hours for {today}.</p>
+              </div>
+              <div className="flex flex-wrap gap-sm">
+                <button className="rounded-lg bg-primary px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50" disabled={Boolean(todayRecord?.check_in_at)} onClick={() => saveEmployeeCheck("in")} type="button">Check In</button>
+                <button className="rounded-lg bg-secondary px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50" disabled={!todayRecord?.check_in_at || Boolean(todayRecord?.check_out_at)} onClick={() => saveEmployeeCheck("out")} type="button">Check Out</button>
+              </div>
+            </div>
+            <div className="mt-md grid grid-cols-1 gap-md md:grid-cols-4">
+              <div><p className="text-label-bold font-label-bold text-on-surface-variant">Check In</p><p className="mt-1 font-semibold">{todayRecord?.check_in_at ? new Date(todayRecord.check_in_at).toLocaleTimeString() : "-"}</p></div>
+              <div><p className="text-label-bold font-label-bold text-on-surface-variant">Check Out</p><p className="mt-1 font-semibold">{todayRecord?.check_out_at ? new Date(todayRecord.check_out_at).toLocaleTimeString() : "-"}</p></div>
+              <div><p className="text-label-bold font-label-bold text-on-surface-variant">Work Hours</p><p className="mt-1 font-semibold">{formatWorkMinutes(Number(todayRecord?.work_minutes ?? minutesBetween(todayRecord?.check_in_at, todayRecord?.check_out_at)))}</p></div>
+              <div><p className="text-label-bold font-label-bold text-on-surface-variant">Status</p><div className="mt-1"><StatusBadge status={todayRecord?.status || "absent"} /></div></div>
+            </div>
+          </div>
+        )}
+        {role === "admin" && (
+          <form className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1" onSubmit={saveManualAttendance}>
+            <h2 className="mb-md text-h3 font-h3">Manual Attendance</h2>
+            <div className="grid grid-cols-1 gap-md md:grid-cols-7">
+              <SelectField label="Employee" value={manual.employee_id} onChange={(employee_id) => setManual({ ...manual, employee_id })} options={visibleEmployeeOptions} />
+              <Field label="Date" type="date" value={manual.attendance_date} onChange={(attendance_date) => setManual({ ...manual, attendance_date })} />
+              <Field label="Check In" type="time" value={manual.check_in_time} onChange={(check_in_time) => setManual({ ...manual, check_in_time })} required={false} />
+              <Field label="Check Out" type="time" value={manual.check_out_time} onChange={(check_out_time) => setManual({ ...manual, check_out_time })} required={false} />
+              <SelectField label="Status" value={manual.status} onChange={(status) => setManual({ ...manual, status })} options={["present", "late", "absent"]} />
+              <Field label="Notes" value={manual.notes} onChange={(notes) => setManual({ ...manual, notes })} required={false} />
+              <button className="self-end rounded-lg bg-primary px-lg py-3 text-label-bold font-label-bold text-white" type="submit">Save</button>
+            </div>
+          </form>
+        )}
+        <div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1">
+          <div className="grid grid-cols-1 gap-md md:grid-cols-5">
+            {role !== "employee" && <SelectField label="Employee" value={filters.employee} onChange={(employee) => setFilters({ ...filters, employee })} options={visibleEmployeeOptions} />}
+            <SelectField label="Status" value={filters.status} onChange={(status) => setFilters({ ...filters, status })} options={["present", "late", "absent"]} />
+            <Field label="From" type="date" value={filters.from} onChange={(from) => setFilters({ ...filters, from })} required={false} />
+            <Field label="To" type="date" value={filters.to} onChange={(to) => setFilters({ ...filters, to })} required={false} />
+            <button className="self-end rounded-lg border border-outline-variant px-4 py-3 text-label-bold font-label-bold" onClick={() => setFilters(emptyFilters)} type="button">Clear</button>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-sm">
+          <div className="text-body-md text-on-surface-variant">{rows.length} attendance rows</div>
+          <div className="flex flex-wrap gap-sm">
+            <button className="rounded-lg bg-primary px-4 py-2 text-white" onClick={exportAttendancePdf} type="button">Export PDF</button>
+            <button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={exportAttendanceExcel} type="button">Export CSV</button>
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1">
+          <div className="overflow-x-auto">
+            <table className="sheet-table">
+              <thead><tr><th>Employee</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Work Hours</th><th>Status</th><th>Notes</th></tr></thead>
+              <tbody>{rows.map((row) => <tr key={row.id}><td><div className="font-semibold">{row.employee?.full_name || "Employee"}</div><div className="text-body-sm text-on-surface-variant">{row.employee?.email || "-"}</div></td><td>{row.attendance_date}</td><td>{row.check_in_at ? new Date(row.check_in_at).toLocaleTimeString() : "-"}</td><td>{row.check_out_at ? new Date(row.check_out_at).toLocaleTimeString() : "-"}</td><td>{formatWorkMinutes(row.workMinutes)}</td><td><StatusBadge status={row.status} /></td><td>{row.notes || "-"}</td></tr>)}</tbody>
+            </table>
+          </div>
+          {!rows.length && <div className="p-lg"><EmptyState title="No attendance records" body="Attendance check-ins, absents, and late arrivals will appear here." /></div>}
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
 function PerformancePage() {
   const { profile } = useAuth();
   const data = useData();
@@ -1754,6 +2090,9 @@ function ReportsPage() {
     const rating = data.ratings.find((r) => r.task_id === task.id);
     return { "Member Name": student?.full_name || "", Manager: manager?.full_name || "", Date: task.created_at ? new Date(task.created_at).toLocaleDateString() : "", Task: task.task_title, Website: project?.project_name || "", Link: submission?.submission_url || task.target_url || "", "Approx Time": task.approx_time || "", Status: task.status || "", Payment: `Rs. ${Number(task.payment_amount || 0)}`, "Payment Status": task.payment_status || "pending", Rating: rating?.rating || "", Remarks: rating?.remarks || task.admin_remarks || task.manager_remarks || "" };
   });
+  const employeeOptions = data.profiles.filter((p) => p.role === "employee").map((p) => ({ value: p.id, label: p.full_name || p.email || p.id }));
+  const managerOptions = data.profiles.filter((p) => p.role === "manager").map((p) => ({ value: p.id, label: p.full_name || p.email || p.id }));
+  const projectOptions = data.projects.map((p) => ({ value: p.id, label: p.project_name || p.website_url || p.id }));
   const exportPdf = () => { const doc = new jsPDF({ orientation: "landscape" }); doc.text(`SEO TaskFlow Report${activePreset ? ` - ${activePreset}` : ""}`, 14, 14); autoTable(doc, { head: [Object.keys(rows[0] || { "Member Name": "", Manager: "", Date: "", Task: "", Website: "", Link: "", "Approx Time": "", Status: "", Payment: "", "Payment Status": "", Rating: "", Remarks: "" })], body: rows.map(Object.values), startY: 20, styles: { fontSize: 8 } }); doc.save("seo-task-report.pdf"); notify("PDF report generated."); };
   const exportExcel = () => {
     const headers = Object.keys(rows[0] || { "Member Name": "", Manager: "", Date: "", Task: "", Website: "", Link: "", "Approx Time": "", Status: "", Payment: "", "Payment Status": "", Rating: "", Remarks: "" });
@@ -1769,7 +2108,7 @@ function ReportsPage() {
     notify("Excel report generated.");
   };
   const shareWhatsapp = () => { const summary = `SEO TaskFlow Report%0ATotal tasks: ${rows.length}%0ACompleted: ${rows.filter((r) => ["done", "approved"].includes(String(r.Status).toLowerCase())).length}`; window.open(`https://wa.me/?text=${summary}`, "_blank"); };
-  return <Shell role="admin" title="Reports"><div className="space-y-lg"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><div className="mb-md flex flex-wrap items-center gap-sm"><span className="mr-sm text-label-bold font-label-bold text-on-surface-variant">Saved presets</span>{["This Week", "This Month", "By Manager", "By Employee", "Payment Pending", "Completed Work"].map((preset) => <button className={`rounded-full border px-4 py-2 text-label-bold font-label-bold ${activePreset === preset ? "border-primary bg-primary text-white" : "border-outline-variant bg-surface text-on-surface hover:bg-surface-container-low"}`} key={preset} onClick={() => setPreset(preset)} type="button">{preset}</button>)}<button className="rounded-full border border-outline-variant px-4 py-2 text-label-bold font-label-bold text-on-surface-variant" onClick={() => { setFilters(emptyFilters); setActivePreset(""); }} type="button">Clear</button></div><div className="grid grid-cols-1 gap-md md:grid-cols-3 xl:grid-cols-8"><SelectField label="Employee" value={filters.student} onChange={(student) => { setFilters({ ...filters, student }); setActivePreset(""); }} options={data.profiles.filter((p) => p.role === "employee").map((p) => p.id)} /><SelectField label="Manager" value={filters.manager} onChange={(manager) => { setFilters({ ...filters, manager }); setActivePreset(""); }} options={data.profiles.filter((p) => p.role === "manager").map((p) => p.id)} /><SelectField label="Project" value={filters.project} onChange={(project) => { setFilters({ ...filters, project }); setActivePreset(""); }} options={data.projects.map((p) => p.id)} /><SelectField label="Status" value={filters.status} onChange={(status) => { setFilters({ ...filters, status }); setActivePreset(""); }} options={statusLabels} /><SelectField label="Task Type" value={filters.task_type} onChange={(task_type) => { setFilters({ ...filters, task_type }); setActivePreset(""); }} options={taskTypes} /><SelectField label="Payment" value={filters.payment} onChange={(payment) => { setFilters({ ...filters, payment }); setActivePreset(""); }} options={["pending", "released"]} /><Field label="From" type="date" value={filters.from} onChange={(from) => { setFilters({ ...filters, from }); setActivePreset(""); }} required={false} /><Field label="To" type="date" value={filters.to} onChange={(to) => { setFilters({ ...filters, to }); setActivePreset(""); }} required={false} /></div></div><div className="flex flex-wrap items-center justify-between gap-sm"><div className="text-body-md text-on-surface-variant">{rows.length} report rows{activePreset ? ` using ${activePreset}` : ""}</div><div className="flex flex-wrap gap-sm"><button className="rounded-lg bg-primary px-4 py-2 text-white" onClick={exportPdf}>Export PDF</button><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={exportExcel}>Export Excel</button><button className="rounded-lg border border-outline-variant px-4 py-2" onClick={shareWhatsapp}>Share WhatsApp</button></div></div><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr>{Object.keys(rows[0] || { "Member Name": "", Manager: "", Date: "", Task: "", Website: "", Link: "", "Approx Time": "", Status: "", Payment: "", "Payment Status": "", Rating: "", Remarks: "" }).map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((row, i) => <tr key={i}>{Object.entries(row).map(([k, v]) => <td key={k}>{k === "Status" || k === "Payment Status" ? <StatusBadge status={v} /> : v}</td>)}</tr>)}</tbody></table></div>{!rows.length && <div className="p-lg"><EmptyState title="No report rows" body="Adjust filters or choose another saved preset." /></div>}</div></div></Shell>;
+  return <Shell role="admin" title="Reports"><div className="space-y-lg"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><div className="mb-md flex flex-wrap items-center gap-sm"><span className="mr-sm text-label-bold font-label-bold text-on-surface-variant">Saved presets</span>{["This Week", "This Month", "By Manager", "By Employee", "Payment Pending", "Completed Work"].map((preset) => <button className={`rounded-full border px-4 py-2 text-label-bold font-label-bold ${activePreset === preset ? "border-primary bg-primary text-white" : "border-outline-variant bg-surface text-on-surface hover:bg-surface-container-low"}`} key={preset} onClick={() => setPreset(preset)} type="button">{preset}</button>)}<button className="rounded-full border border-outline-variant px-4 py-2 text-label-bold font-label-bold text-on-surface-variant" onClick={() => { setFilters(emptyFilters); setActivePreset(""); }} type="button">Clear</button></div><div className="grid grid-cols-1 gap-md md:grid-cols-3 xl:grid-cols-8"><SelectField label="Employee" value={filters.student} onChange={(student) => { setFilters({ ...filters, student }); setActivePreset(""); }} options={employeeOptions} /><SelectField label="Manager" value={filters.manager} onChange={(manager) => { setFilters({ ...filters, manager }); setActivePreset(""); }} options={managerOptions} /><SelectField label="Project" value={filters.project} onChange={(project) => { setFilters({ ...filters, project }); setActivePreset(""); }} options={projectOptions} /><SelectField label="Status" value={filters.status} onChange={(status) => { setFilters({ ...filters, status }); setActivePreset(""); }} options={statusLabels} /><SelectField label="Task Type" value={filters.task_type} onChange={(task_type) => { setFilters({ ...filters, task_type }); setActivePreset(""); }} options={taskTypes} /><SelectField label="Payment" value={filters.payment} onChange={(payment) => { setFilters({ ...filters, payment }); setActivePreset(""); }} options={["pending", "released"]} /><Field label="From" type="date" value={filters.from} onChange={(from) => { setFilters({ ...filters, from }); setActivePreset(""); }} required={false} /><Field label="To" type="date" value={filters.to} onChange={(to) => { setFilters({ ...filters, to }); setActivePreset(""); }} required={false} /></div></div><div className="flex flex-wrap items-center justify-between gap-sm"><div className="text-body-md text-on-surface-variant">{rows.length} report rows{activePreset ? ` using ${activePreset}` : ""}</div><div className="flex flex-wrap gap-sm"><button className="rounded-lg bg-primary px-4 py-2 text-white" onClick={exportPdf}>Export PDF</button><button className="rounded-lg bg-secondary px-4 py-2 text-white" onClick={exportExcel}>Export Excel</button><button className="rounded-lg border border-outline-variant px-4 py-2" onClick={shareWhatsapp}>Share WhatsApp</button></div></div><div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1"><div className="overflow-x-auto"><table className="sheet-table"><thead><tr>{Object.keys(rows[0] || { "Member Name": "", Manager: "", Date: "", Task: "", Website: "", Link: "", "Approx Time": "", Status: "", Payment: "", "Payment Status": "", Rating: "", Remarks: "" }).map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((row, i) => <tr key={i}>{Object.entries(row).map(([k, v]) => <td key={k}>{k === "Status" || k === "Payment Status" ? <StatusBadge status={v} /> : v}</td>)}</tr>)}</tbody></table></div>{!rows.length && <div className="p-lg"><EmptyState title="No report rows" body="Adjust filters or choose another saved preset." /></div>}</div></div></Shell>;
 }
 
 function SettingsPage({ role }) {
@@ -1855,6 +2194,7 @@ function AppRouter() {
   if (path === "/admin/dashboard") return <Guard role="admin"><AdminDashboard /></Guard>;
   if (path === "/admin/inbox") return <Guard role="admin"><AdminReviewInbox /></Guard>;
   if (path === "/admin/employees" || path === "/admin/students") return <Guard role="admin"><StudentsPage /></Guard>;
+  if (path === "/admin/attendance") return <Guard role="admin"><AttendancePage role="admin" /></Guard>;
   if (path === "/admin/tasks") return <Guard role="admin"><TasksPage /></Guard>;
   if (path.startsWith("/admin/tasks/")) return <Guard role="admin"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/admin/submissions") return <Guard role="admin"><SubmissionsPage /></Guard>;
@@ -1867,11 +2207,13 @@ function AppRouter() {
   if (path === "/manager/dashboard") return <Guard role="manager"><ManagerDashboard /></Guard>;
   if (path === "/manager/inbox") return <Guard role="manager"><ManagerReviewInbox /></Guard>;
   if (path === "/manager/tasks") return <Guard role="manager"><ManagerTasksPage /></Guard>;
+  if (path === "/manager/attendance") return <Guard role="manager"><AttendancePage role="manager" /></Guard>;
   if (path === "/manager/performance") return <Guard role="manager"><ManagerTeamPerformance /></Guard>;
   if (path.startsWith("/manager/tasks/")) return <Guard role="manager"><TaskDetail id={path.split("/").pop()} /></Guard>;
   if (path === "/manager/submissions") return <Guard role="manager"><ManagerSubmissionsPage /></Guard>;
   if (path === "/manager/settings") return <Guard role="manager"><SettingsPage role="manager" /></Guard>;
   if (path === "/employee/dashboard" || path === "/student/dashboard") return <Guard role="employee"><EmployeeDashboard /></Guard>;
+  if (path === "/employee/attendance" || path === "/student/attendance") return <Guard role="employee"><AttendancePage role="employee" /></Guard>;
   if (path === "/employee/tasks" || path === "/student/tasks") return <Guard role="employee"><EmployeeTasksPage /></Guard>;
   if (path.startsWith("/employee/tasks/") || path.startsWith("/student/tasks/")) return <Guard role="employee"><TaskDetail id={path.split("/").pop()} studentMode /></Guard>;
   if (path === "/employee/performance" || path === "/student/performance") return <Guard role="employee"><PerformancePage /></Guard>;
