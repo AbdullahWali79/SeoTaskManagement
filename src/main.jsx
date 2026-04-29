@@ -55,6 +55,10 @@ function useToast() {
   return useContext(ToastContext);
 }
 
+function isApprovedAccount(profile) {
+  return profile?.status === "approved" || profile?.status === "active";
+}
+
 function ToastProvider({ children }) {
   const [toast, setToast] = useState(null);
   const notify = (message, type = "success") => {
@@ -77,13 +81,14 @@ function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
+  const authLoadId = React.useRef(0);
 
   const loadProfile = async (user) => {
     if (!user || !isSupabaseConfigured) return null;
     const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     if (error) {
       console.error("Profile lookup failed", error);
-      setProfile(null);
+      setProfile((current) => current || null);
       throw new Error(`Profile lookup failed: ${error.message}`);
     }
     setProfile(data || null);
@@ -104,7 +109,9 @@ function AuthProvider({ children }) {
       setLoading(false);
       return;
     }
+    const initialLoadId = ++authLoadId.current;
     supabase.auth.getSession().then(async ({ data }) => {
+      if (initialLoadId !== authLoadId.current) return;
       setSession(data.session);
       if (data.session?.user) {
         try {
@@ -113,11 +120,12 @@ function AuthProvider({ children }) {
           console.error(error);
         }
       } else {
-        setProfile(null);
+        setProfile((current) => current || null);
       }
       setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      authLoadId.current += 1;
       setSession(nextSession);
       if (nextSession?.user) {
         window.setTimeout(() => {
@@ -131,9 +139,10 @@ function AuthProvider({ children }) {
   }, []);
 
   const signIn = async (email, password, role) => {
+    authLoadId.current += 1;
     if (!isSupabaseConfigured) {
       const found = demoProfiles.find((p) => p.email.toLowerCase() === email.toLowerCase() && p.role === role) || (role === "admin" ? demoProfiles[0] : demoProfiles[1]);
-      if (["employee", "manager"].includes(found.role) && found.status !== "approved") throw new Error("Your account is still pending approval.");
+      if (["employee", "manager"].includes(found.role) && !isApprovedAccount(found)) throw new Error("Your account is still pending approval.");
       setProfile(found);
       return found;
     }
@@ -144,7 +153,7 @@ function AuthProvider({ children }) {
       await supabase.auth.signOut();
       throw new Error(!nextProfile ? "Login succeeded, but no profile row exists for this user. Create/approve the profile in Supabase." : `This account is registered as ${nextProfile.role}, not ${role}.`);
     }
-    if (["employee", "manager"].includes(role) && nextProfile.status !== "approved") {
+    if (["employee", "manager"].includes(role) && !isApprovedAccount(nextProfile)) {
       await supabase.auth.signOut();
       throw new Error("Your account is still pending approval.");
     }
@@ -183,29 +192,41 @@ function DataProvider({ children }) {
   const refresh = async () => {
     if (!isSupabaseConfigured || !profile) return;
     setLoading(true);
-    const [p, pr, t, s, r, u, pay, att] = await Promise.all([
+    const [p, pr, t, s, r] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
       supabase.from("submissions").select("*").order("submitted_at", { ascending: false }),
-      supabase.from("ratings").select("*").order("created_at", { ascending: false }),
+      supabase.from("ratings").select("*").order("created_at", { ascending: false })
+    ]);
+    const [u, pay, att] = await Promise.all([
       supabase.from("task_progress_updates").select("*").order("created_at", { ascending: false }),
       supabase.from("payments").select("*").order("released_at", { ascending: false }),
       supabase.from("attendance_records").select("*").order("attendance_date", { ascending: false })
     ]);
     setLoading(false);
-    if (p.error || pr.error || t.error || s.error || r.error || u.error || pay.error || att.error) {
+    if (p.error || pr.error || t.error || s.error || r.error) {
+      console.error("Core Supabase data load failed", { profiles: p.error, projects: pr.error, tasks: t.error, submissions: s.error, ratings: r.error });
       notify("Could not load Supabase data. Check schema and RLS policies.", "error");
       return;
+    }
+    const optionalErrors = [
+      ["task_progress_updates", u.error],
+      ["payments", pay.error],
+      ["attendance_records", att.error]
+    ].filter(([, error]) => error);
+    if (optionalErrors.length) {
+      console.warn("Optional Supabase tables could not load", Object.fromEntries(optionalErrors));
+      notify(`Some modules need database migration: ${optionalErrors.map(([table]) => table).join(", ")}`, "error");
     }
     setProfiles(p.data || []);
     setProjects(pr.data || []);
     setTasks(t.data || []);
     setSubmissions(s.data || []);
     setRatings(r.data || []);
-    setProgressUpdates(u.data || []);
-    setPayments(pay.data || []);
-    setAttendanceRecords(att.data || []);
+    setProgressUpdates(u.error ? [] : (u.data || []));
+    setPayments(pay.error ? [] : (pay.data || []));
+    setAttendanceRecords(att.error ? [] : (att.data || []));
   };
 
   useEffect(() => {
@@ -1032,7 +1053,7 @@ function Shell({ role, title, children }) {
 function Guard({ role, children }) {
   const { profile, loading } = useAuth();
   if (loading) return <div className="min-h-screen bg-background"><LoadingBar show /><div className="p-xl">Loading...</div></div>;
-  if (!profile || profile.role !== role || (["employee", "manager"].includes(role) && profile.status !== "approved")) {
+  if (!profile || profile.role !== role || (["employee", "manager"].includes(role) && !isApprovedAccount(profile))) {
     navigate(role === "admin" ? "/admin/login" : role === "manager" ? "/manager/login" : "/employee/login");
     return null;
   }
@@ -1540,7 +1561,7 @@ function TaskDetail({ id, studentMode = false }) {
   if (!task) return <Shell role={shellRole} title="Task Detail"><EmptyState title="Task not found" body="The selected task does not exist." /></Shell>;
   const project = data.projects.find((p) => p.id === task.project_id);
   const progress = getLatestTaskProgress(task, data.progressUpdates);
-  return <Shell role={shellRole} title="Task Detail"><div className="grid grid-cols-1 gap-lg lg:grid-cols-3"><div className="rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 lg:col-span-2"><div className="mb-md flex items-start justify-between gap-3"><div><h1 className="text-h1 font-h1">{task.task_title}</h1><p className="mt-1 text-body-md text-on-surface-variant">{task.task_type}</p></div><StatusBadge status={task.status} /></div><RevisionNotice task={task} /><div className="grid grid-cols-1 gap-md md:grid-cols-2"><Info label="Project" value={<ProjectTag project={project} />} /><Info label="Target URL" value={task.target_url} /><Info label="Posting URL" value={task.posting_url || "-"} /><Info label="Approx Time" value={task.approx_time} /><Info label="Deadline" value={task.deadline ? new Date(task.deadline).toLocaleString() : "-"} /><Info label="Priority" value={task.priority} /><Info label="Payment Amount" value={`Rs. ${Number(task.payment_amount || 0)}`} /><Info label="Progress" value={`${progress}%`} /></div><div className="mt-lg"><h3 className="mb-sm text-h3 font-h3">Instructions</h3><div className="rich-content rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant" dangerouslySetInnerHTML={{ __html: task.instructions || "" }} /></div><ProgressHistory task={task} /><TaskTimeline task={task} /></div><div>{shellRole === "employee" ? <SubmitTask task={task} /> : <AdminReviewPanel task={task} />}</div></div></Shell>;
+  return <Shell role={shellRole} title="Task Detail"><div className="grid min-w-0 grid-cols-1 gap-lg lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"><div className="min-w-0 rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><div className="mb-md flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><h1 className="break-words text-h1 font-h1">{task.task_title}</h1><p className="mt-1 text-body-md text-on-surface-variant">{task.task_type}</p></div><StatusBadge status={task.status} /></div><RevisionNotice task={task} /><div className="grid min-w-0 grid-cols-1 gap-md md:grid-cols-2"><Info label="Project" value={<ProjectTag project={project} />} /><Info label="Target URL" value={task.target_url} /><Info label="Posting URL" value={task.posting_url || "-"} /><Info label="Approx Time" value={task.approx_time} /><Info label="Deadline" value={task.deadline ? new Date(task.deadline).toLocaleString() : "-"} /><Info label="Priority" value={task.priority} /><Info label="Payment Amount" value={`Rs. ${Number(task.payment_amount || 0)}`} /><Info label="Progress" value={`${progress}%`} /></div><div className="mt-lg min-w-0"><h3 className="mb-sm text-h3 font-h3">Instructions</h3><div className="rich-content min-w-0 rounded-lg bg-surface-container-low p-md text-body-md text-on-surface-variant" dangerouslySetInnerHTML={{ __html: task.instructions || "" }} /></div><ProgressHistory task={task} /><TaskTimeline task={task} /></div><div className="min-w-0">{shellRole === "employee" ? <SubmitTask task={task} /> : <AdminReviewPanel task={task} />}</div></div></Shell>;
 }
 
 function Info({ label, value }) {
@@ -1609,7 +1630,7 @@ function TaskTimeline({ task }) {
     { label: "Admin Decision", date: task.admin_reviewed_at || rating?.created_at, detail: task.admin_remarks || rating?.remarks || (["done", "approved", "rejected", "revision required"].includes(String(task.status).toLowerCase()) ? `Admin marked task as ${task.status}.` : "Waiting for admin decision."), done: Boolean(task.admin_reviewed_at || rating || ["done", "approved", "rejected", "revision required"].includes(String(task.status).toLowerCase())), icon: "verified" },
     { label: "Payment Released", date: payment?.released_at, detail: payment ? `${payment.method || "Payment"} ${payment.transaction_number ? `- ${payment.transaction_number}` : ""} released by ${admin?.full_name || "admin"} for Rs. ${Number(payment.amount || task.payment_amount || 0)}.` : `Rs. ${Number(task.payment_amount || 0)} pending release.`, done: Boolean(payment), icon: "payments" }
   ];
-  return <div className="mt-lg"><h3 className="mb-md text-h3 font-h3">Task Timeline</h3><div className="rounded-xl border border-outline-variant/50 bg-surface-container-low p-md">{rows.map((row, index) => <div className="relative grid grid-cols-[auto_1fr] gap-md pb-md last:pb-0" key={row.label}>{index < rows.length - 1 && <div className={`absolute left-5 top-10 h-[calc(100%-2rem)] w-px ${row.done ? "bg-primary/40" : "bg-outline-variant"}`} />}<div className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border ${row.done ? "border-primary bg-primary text-white" : "border-outline-variant bg-surface text-outline"}`}><Icon className="text-[20px]">{row.done ? "check" : row.icon}</Icon></div><div className="rounded-lg bg-surface p-md shadow-sm"><div className="flex flex-col justify-between gap-xs sm:flex-row sm:items-center"><h4 className="font-semibold">{row.label}</h4><span className="text-body-sm text-on-surface-variant">{row.date ? new Date(row.date).toLocaleString() : "Pending"}</span></div><p className="mt-1 break-words text-body-md text-on-surface-variant">{row.detail}</p></div></div>)}</div></div>;
+  return <div className="mt-lg min-w-0"><h3 className="mb-md text-h3 font-h3">Task Timeline</h3><div className="min-w-0 rounded-xl border border-outline-variant/50 bg-surface-container-low p-md">{rows.map((row, index) => <div className="relative grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-md pb-md last:pb-0" key={row.label}>{index < rows.length - 1 && <div className={`absolute left-5 top-10 h-[calc(100%-2rem)] w-px ${row.done ? "bg-primary/40" : "bg-outline-variant"}`} />}<div className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border ${row.done ? "border-primary bg-primary text-white" : "border-outline-variant bg-surface text-outline"}`}><Icon className="text-[20px]">{row.done ? "check" : row.icon}</Icon></div><div className="min-w-0 rounded-lg bg-surface p-md shadow-sm"><div className="flex min-w-0 flex-col justify-between gap-xs sm:flex-row sm:items-center"><h4 className="font-semibold">{row.label}</h4><span className="shrink-0 text-body-sm text-on-surface-variant">{row.date ? new Date(row.date).toLocaleString() : "Pending"}</span></div><p className="mt-1 min-w-0 break-all text-body-md text-on-surface-variant">{row.detail}</p></div></div>)}</div></div>;
 }
 
 function TextAreaField({ label, value, onChange, placeholder, required = false }) {
