@@ -2074,11 +2074,53 @@ function AttendancePage({ role }) {
 function PerformancePage() {
   const { profile } = useAuth();
   const data = useData();
-  const mine = data.tasks.filter((t) => t.student_id === profile.id);
-  const ratings = data.ratings.filter((r) => r.student_id === profile.id);
-  const avg = ratings.length ? (ratings.reduce((s, r) => s + Number(r.rating), 0) / ratings.length).toFixed(1) : "0.0";
-  const late = mine.filter((t) => t.deadline && new Date(t.deadline) < new Date() && !["done", "approved"].includes(t.status)).length;
-  return <Shell role="employee" title="Performance"><div className="grid grid-cols-1 gap-md md:grid-cols-5"><Card title="Total Tasks" value={mine.length} meta="Assigned" /><Card title="Completed" value={mine.filter((t) => ["done", "approved"].includes(t.status)).length} meta="Finished" accent="text-secondary" /><Card title="Pending" value={mine.filter((t) => t.status === "pending").length} meta="Not started" /><Card title="Late Tasks" value={late} meta="Past deadline" accent="text-error" /><Card title="Average Rating" value={avg} meta="Admin score" icon="star" /></div><div className="mt-lg rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1"><h3 className="mb-md text-h3 font-h3">Ratings & Remarks</h3>{ratings.length ? ratings.map((r) => { const task = data.tasks.find((t) => t.id === r.task_id); return <div key={r.id} className="border-t border-outline-variant/30 py-md"><div className="font-semibold">{task?.task_title}</div><div className="text-[#FFAB00]">Rating: {r.rating}/5</div><p className="text-body-md text-on-surface-variant">{r.remarks}</p></div>; }) : <EmptyState title="No ratings yet" body="Approved task ratings and admin remarks will appear here." />}</div></Shell>;
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const [month, setMonth] = useState(currentMonth);
+  const mine = data.tasks.filter((task) => task.student_id === profile.id);
+  const inSelectedMonth = (value) => value && new Date(value).toISOString().slice(0, 7) === month;
+  const monthTasks = mine.filter((task) => inSelectedMonth(task.created_at) || inSelectedMonth(task.updated_at) || inSelectedMonth(task.deadline));
+  const ratings = data.ratings.filter((rating) => rating.student_id === profile.id && (!month || inSelectedMonth(rating.created_at)));
+  const avg = ratings.length ? (ratings.reduce((sum, rating) => sum + Number(rating.rating), 0) / ratings.length).toFixed(1) : "0.0";
+  const completed = monthTasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase())).length;
+  const pending = monthTasks.filter((task) => ["pending", "in progress", "submitted", "revision required"].includes(String(task.status).toLowerCase())).length;
+  const late = monthTasks.filter((task) => task.deadline && new Date(task.deadline) < new Date() && !["done", "approved"].includes(String(task.status).toLowerCase())).length;
+  const feedbackRows = monthTasks.map((task) => {
+    const rating = data.ratings.find((item) => item.task_id === task.id);
+    const manager = data.profiles.find((person) => person.id === task.manager_id);
+    return { task, rating, manager };
+  });
+  return (
+    <Shell role="employee" title="Performance">
+      <div className="space-y-lg">
+        <div className="flex flex-col justify-between gap-md rounded-xl border border-outline-variant bg-surface p-lg shadow-level-1 md:flex-row md:items-center">
+          <div>
+            <h1 className="text-h2 font-h2">Monthly Review</h1>
+            <p className="mt-1 text-body-md text-on-surface-variant">Assigned tasks, completed work, pending items, manager feedback, and admin feedback.</p>
+          </div>
+          <Field label="Review Month" type="month" value={month} onChange={setMonth} />
+        </div>
+        <div className="grid grid-cols-1 gap-md md:grid-cols-5">
+          <Card title="Assigned Tasks" value={monthTasks.length} meta="This month" icon="assignment" />
+          <Card title="Completed" value={completed} meta="Done or approved" accent="text-secondary" />
+          <Card title="Pending" value={pending} meta="Open workflow" />
+          <Card title="Late Tasks" value={late} meta="Past deadline" accent="text-error" />
+          <Card title="Performance Rating" value={avg} meta="Admin score" icon="star" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface shadow-level-1">
+          <div className="border-b border-outline-variant/50 p-lg">
+            <h2 className="text-h3 font-h3">Task Feedback</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="sheet-table">
+              <thead><tr><th>Task</th><th>Status</th><th>Manager</th><th>Manager Feedback</th><th>Admin Rating</th><th>Admin Feedback</th><th className="text-right">Action</th></tr></thead>
+              <tbody>{feedbackRows.map(({ task, rating, manager }) => <tr key={task.id}><td><div className="font-semibold">{task.task_title}</div><div className="text-body-sm text-on-surface-variant">{task.task_type || "-"}</div></td><td><StatusBadge status={task.status} /></td><td>{manager?.full_name || "-"}</td><td className="max-w-sm whitespace-normal break-words">{task.manager_remarks || task.revision_notes || "-"}</td><td>{rating?.rating ? `${rating.rating}/5` : "-"}</td><td className="max-w-sm whitespace-normal break-words">{task.admin_remarks || rating?.remarks || "-"}</td><td className="text-right"><button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" onClick={() => navigate(`/employee/tasks/${task.id}`)} type="button">Open</button></td></tr>)}</tbody>
+            </table>
+          </div>
+          {!feedbackRows.length && <div className="p-lg"><EmptyState title="No monthly performance yet" body="Tasks and feedback for the selected month will appear here." /></div>}
+        </div>
+      </div>
+    </Shell>
+  );
 }
 
 function ReportsPage() {
