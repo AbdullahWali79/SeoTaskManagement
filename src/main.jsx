@@ -628,6 +628,236 @@ function HeroDashboardPreview({ stats }) {
   );
 }
 
+function PremiumLanding() {
+  const { tasks, submissions } = useData();
+  const doneCount = tasks.filter((task) => ["done", "approved"].includes(String(task.status).toLowerCase())).length;
+  const reviewCount = submissions.filter((submission) => ["submitted", "revision required"].includes(String(submission.status).toLowerCase())).length;
+  const pendingCount = tasks.filter((task) => ["pending", "in progress"].includes(String(task.status).toLowerCase())).length;
+  const activeCount = tasks.filter((task) => ["pending", "in progress", "submitted"].includes(String(task.status).toLowerCase())).length;
+  const completionRate = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+  const stats = { done: doneCount, review: reviewCount, pending: pendingCount, active: activeCount, completionRate };
+
+  return (
+    <main className="bg-[#f7f8fb] text-[#091c35]">
+      <section className="relative overflow-hidden border-b border-[#dbe1ee] bg-[linear-gradient(180deg,#ffffff_0%,#eef4ff_54%,#f8fafc_100%)] px-lg pb-2xl pt-lg">
+        <div className="mx-auto flex max-w-7xl items-center justify-between rounded-xl border border-[#dbe1ee] bg-white/85 px-md py-sm shadow-level-1 backdrop-blur">
+          <button className="flex items-center gap-sm text-left" onClick={() => navigate("/")} type="button">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0b4fb3] text-lg font-black text-white">S</span>
+            <span>
+              <span className="block text-h3 font-h3 text-[#0b4fb3]">SEO TaskFlow</span>
+              <span className="block text-body-sm text-[#5b667a]">by SwiftRankSolution</span>
+            </span>
+          </button>
+          <div className="hidden items-center gap-lg text-body-sm font-semibold text-[#536173] md:flex">
+            <a href="#workflow" className="hover:text-[#0b4fb3]">Workflow</a>
+            <a href="#modules" className="hover:text-[#0b4fb3]">Modules</a>
+            <a href="#reports" className="hover:text-[#0b4fb3]">Reports</a>
+          </div>
+          <div className="flex items-center gap-sm">
+            <LinkButton to="/employee/login" className="hidden rounded-lg border border-[#c7d0df] px-4 py-2 text-label-bold font-label-bold text-[#12233f] hover:bg-[#f1f5fb] sm:block">Employee Login</LinkButton>
+            <LinkButton to="/admin/login" className="rounded-lg bg-[#0b4fb3] px-4 py-2 text-label-bold font-label-bold text-white shadow-sm hover:bg-[#083f91]">Admin Login</LinkButton>
+          </div>
+        </div>
+        <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-2xl pt-2xl lg:grid-cols-[minmax(0,0.92fr)_minmax(520px,1.08fr)] lg:pt-3xl">
+          <div className="flex min-w-0 flex-col gap-lg">
+            <div className="flex w-max max-w-full items-center gap-sm rounded-lg border border-[#c9d8f4] bg-white px-4 py-2 shadow-level-1">
+              <Icon className="text-[20px] text-[#0b4fb3]">workspace_premium</Icon>
+              <span className="text-label-bold font-label-bold text-[#0b4fb3]">Agency-grade SEO operations platform</span>
+            </div>
+            <div className="space-y-md">
+              <h1 className="max-w-4xl text-[44px] font-black leading-[1.03] tracking-normal text-[#081b35] md:text-[64px]">Control every SEO task from assignment to client-ready reporting.</h1>
+              <p className="max-w-2xl text-body-lg leading-8 text-[#4b5870]">SEO TaskFlow gives admins, managers, and employees one polished system for task assignment, submissions, attendance, monthly performance, payments, and exportable reports.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-sm sm:grid-cols-3">
+              {[["Task pipeline", `${tasks.length} records`], ["Completion rate", `${completionRate}%`], ["In review", reviewCount]].map(([label, value]) => (
+                <div className="rounded-lg border border-[#d8e0ee] bg-white p-md shadow-level-1" key={label}>
+                  <p className="text-h3 font-h3 text-[#0b4fb3]">{value}</p>
+                  <p className="mt-1 text-body-sm font-semibold text-[#5b667a]">{label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col gap-md sm:flex-row">
+              <LinkButton to="/admin/login" className="flex items-center justify-center gap-sm rounded-lg bg-[#0b4fb3] px-lg py-3 text-body-md font-bold text-white shadow-level-2 transition hover:-translate-y-0.5 hover:bg-[#083f91]"><Icon className="text-[20px]">admin_panel_settings</Icon>Open Admin Portal</LinkButton>
+              <LinkButton to="/employee/signup" className="flex items-center justify-center gap-sm rounded-lg border border-[#c7d0df] bg-white px-lg py-3 text-body-md font-bold text-[#12233f] shadow-level-1 transition hover:-translate-y-0.5 hover:bg-[#f4f7fb]"><Icon className="text-[20px]">person_add</Icon>Join as Employee</LinkButton>
+            </div>
+            <div className="flex flex-wrap gap-sm text-body-sm text-[#536173]">
+              {["Admin review inbox", "Manager forwarding", "Employee submissions", "PDF and Excel reports"].map((item) => <span className="rounded-full border border-[#d8e0ee] bg-white px-3 py-1 font-semibold" key={item}>{item}</span>)}
+            </div>
+          </div>
+          <PremiumDashboardPreview stats={stats} />
+        </div>
+      </section>
+
+      <section id="workflow" className="bg-white px-lg py-2xl">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-lg md:grid-cols-4">
+          {[
+            ["01", "Assign", "Create SEO tasks with deadline, project, manager, payment amount, and full instructions."],
+            ["02", "Execute", "Employees update daily progress, submit URLs, notes, screenshots, and time spent."],
+            ["03", "Review", "Managers add feedback, request revisions, approve progress, and forward work to admin."],
+            ["04", "Report", "Admins rate performance, release payments, and export client-ready reports."]
+          ].map(([step, title, body]) => (
+            <div className="rounded-xl border border-[#d8e0ee] bg-[#fbfcff] p-lg shadow-level-1" key={step}>
+              <span className="text-label-bold font-label-bold text-[#0b4fb3]">{step}</span>
+              <h3 className="mt-sm text-h3 font-h3 text-[#081b35]">{title}</h3>
+              <p className="mt-sm text-body-md leading-7 text-[#5b667a]">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="modules" className="bg-[#f3f6fb] px-lg py-3xl">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-2xl max-w-3xl">
+            <span className="text-label-bold font-label-bold uppercase text-[#0b4fb3]">Complete control room</span>
+            <h2 className="mt-sm text-h1 font-h1 text-[#081b35]">Built for real SEO teams, not generic task lists.</h2>
+            <p className="mt-md text-body-lg leading-8 text-[#5b667a]">Every module is tied to the operating model: admins control quality and payments, managers control team delivery, employees focus on execution.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-lg md:grid-cols-2 xl:grid-cols-3">
+            {[
+              ["assignment", "Task Management", "Weekly assignments, rich instructions, deadlines, project mapping, priorities, and payment values."],
+              ["trending_up", "Performance Reviews", "Monthly reviews with assigned, completed, pending, ratings, manager feedback, and admin feedback."],
+              ["schedule", "Attendance", "Daily check-in/out, late arrivals, absents, calculated work hours, and attendance exports."],
+              ["rate_review", "Quality Review", "Submissions, revision requests, manager remarks, admin approvals, ratings, and task timeline."],
+              ["payments", "Payments", "Payment queue, released status, transaction details, proof upload, and task-level tracking."],
+              ["analytics", "Reports", "PDF/Excel exports, WhatsApp sharing, project reports, payment reports, and task filters."]
+            ].map(([icon, title, body], index) => (
+              <div key={title} className={`${index === 0 ? "xl:col-span-2" : ""} rounded-xl border border-[#d8e0ee] bg-white p-lg shadow-level-1 transition hover:-translate-y-1 hover:shadow-level-2`}>
+                <div className="mb-md flex h-12 w-12 items-center justify-center rounded-lg bg-[#e8f0ff] text-[#0b4fb3]"><Icon>{icon}</Icon></div>
+                <h3 className="mb-sm text-h3 font-h3 text-[#081b35]">{title}</h3>
+                <p className="text-body-md leading-7 text-[#5b667a]">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="reports" className="bg-white px-lg py-3xl">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-2xl lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <span className="text-label-bold font-label-bold uppercase text-[#0b4fb3]">Client-ready output</span>
+            <h2 className="mt-sm text-h1 font-h1 text-[#081b35]">Reports that look organized before they ever reach a client.</h2>
+            <p className="mt-md text-body-lg leading-8 text-[#5b667a]">Filter by employee, manager, project, task status, payment status, or date range. Export professional PDFs and Excel files, then share summaries directly.</p>
+            <div className="mt-lg grid grid-cols-1 gap-sm sm:grid-cols-2">
+              {["Project progress", "Employee performance", "Manager performance", "Payment queue"].map((item) => <div className="flex items-center gap-sm rounded-lg border border-[#d8e0ee] bg-[#fbfcff] p-md font-semibold text-[#12233f]" key={item}><Icon className="text-[20px] text-[#0b4fb3]">check_circle</Icon>{item}</div>)}
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-[#d8e0ee] bg-[#081b35] p-lg text-white shadow-level-2">
+            <div className="mb-md flex items-center justify-between">
+              <div>
+                <h3 className="text-h3 font-h3">Agency Report Snapshot</h3>
+                <p className="mt-1 text-body-sm text-white/55">Filtered monthly overview</p>
+              </div>
+              <span className="rounded-full bg-[#36b37e]/15 px-3 py-1 text-label-bold font-label-bold text-[#7cf2b8]">Ready</span>
+            </div>
+            <div className="grid grid-cols-2 gap-md md:grid-cols-4">
+              {[["Tasks", tasks.length], ["Done", doneCount], ["Review", reviewCount], ["Pending", pendingCount]].map(([label, value]) => <div className="rounded-lg border border-white/10 bg-white/[0.06] p-md" key={label}><p className="text-h2 font-h2">{value}</p><p className="mt-1 text-body-sm text-white/50">{label}</p></div>)}
+            </div>
+            <div className="mt-lg overflow-hidden rounded-lg border border-white/10">
+              {[
+                ["On-page audit", "Submitted", "Programming Tutorials", "Rs. 2,500"],
+                ["Backlink outreach", "In progress", "Client Growth Hub", "Rs. 1,800"],
+                ["Keyword clusters", "Done", "SEO TaskFlow", "Rs. 3,200"]
+              ].map(([task, status, project, amount]) => <div className="grid grid-cols-1 gap-sm border-b border-white/10 bg-white/[0.04] p-md last:border-b-0 md:grid-cols-[1.3fr_1fr_1fr_auto]" key={task}><span className="font-semibold">{task}</span><span className="text-white/65">{project}</span><StatusBadge status={status} /><span className="font-semibold text-[#7cf2b8]">{amount}</span></div>)}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#0a1324] px-lg py-2xl text-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-lg md:grid-cols-[1fr_auto]">
+          <div>
+            <h2 className="text-h1 font-h1">Ready to run SEO operations like a serious agency?</h2>
+            <p className="mt-sm max-w-2xl text-body-lg leading-8 text-white/65">Give clients cleaner reporting, give managers visibility, and give employees a simple execution flow.</p>
+          </div>
+          <div className="flex flex-col gap-sm sm:flex-row">
+            <LinkButton to="/admin/login" className="rounded-lg bg-white px-lg py-3 text-body-md font-bold text-[#0a1324] hover:bg-[#edf3ff]">Start as Admin</LinkButton>
+            <LinkButton to="/manager/login" className="rounded-lg border border-white/20 px-lg py-3 text-body-md font-bold text-white hover:bg-white/10">Manager Login</LinkButton>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-[#1d2940] bg-[#07101f] px-lg py-xl text-white">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-lg md:flex-row md:items-center">
+          <div><div className="flex items-center gap-sm"><Icon className="text-[#7cf2b8]">task_alt</Icon><span className="text-h3 font-h3">SEO TaskFlow</span></div><p className="mt-sm max-w-sm text-body-md text-white/55">Premium SEO task management for agencies, teams, managers, and employees.</p></div>
+          <p className="text-body-sm text-white/45">Copyright 2026 SEO TaskFlow. Developed by <a className="font-semibold text-[#7cf2b8] underline-offset-4 hover:underline" href="https://muhammadabdullahwali.vercel.app/" target="_blank" rel="noreferrer">Muhammad Abdullah</a></p>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+function PremiumDashboardPreview({ stats }) {
+  return (
+    <div className="relative min-h-[560px] overflow-hidden rounded-xl border border-[#1f2e46] bg-[#06101c] p-lg shadow-[0_24px_70px_rgba(15,35,70,0.22)]">
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[length:24px_24px]" />
+      <div className="relative z-10 mx-auto max-w-[760px] text-[#dfe8ff]">
+        <div className="mb-xl flex items-center justify-between gap-md">
+          <div>
+            <p className="text-h3 font-h3 text-white">Live Operations Dashboard</p>
+            <p className="mt-1 text-body-sm text-white/45">Tasks, approvals, progress, and payments in one command center</p>
+          </div>
+          <div className="flex items-center gap-sm rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-white/60">
+            <Icon className="text-[18px]">verified</Icon>
+            <span className="text-label-bold font-label-bold">Synced</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-md md:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-md">
+            {[
+              ["Keyword mapping", "Submitted", "92%", "#7cf2b8"],
+              ["Technical audit", "In progress", "68%", "#62b6ff"],
+              ["Backlink outreach", "Pending", "35%", "#ffd166"]
+            ].map(([title, status, progress, color]) => (
+              <div className="rounded-lg border border-white/10 bg-white/[0.055] p-md" key={title}>
+                <div className="mb-sm flex items-center justify-between gap-md">
+                  <div>
+                    <p className="font-semibold text-white">{title}</p>
+                    <p className="text-body-sm text-white/45">{status}</p>
+                  </div>
+                  <span className="text-body-sm font-semibold" style={{ color }}>{progress}</span>
+                </div>
+                <div className="h-2 rounded-full bg-white/10">
+                  <div className="h-full rounded-full" style={{ width: progress, backgroundColor: color }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/[0.055] p-md">
+            <div className="mb-md flex items-center justify-between">
+              <span className="text-label-bold font-label-bold text-white/60">Monthly Review</span>
+              <Icon className="text-[20px] text-[#7cf2b8]">trending_up</Icon>
+            </div>
+            <div className="flex h-44 items-center justify-center">
+              <div className="relative flex h-36 w-36 items-center justify-center rounded-full" style={{ background: `conic-gradient(#7cf2b8 ${stats.completionRate || 0}%, rgba(255,255,255,0.12) 0)` }}>
+                <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-[#06101c]">
+                  <span className="text-h1 font-h1 text-white">{stats.completionRate || 0}%</span>
+                  <span className="text-body-sm text-white/45">complete</span>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-sm">
+              <div className="rounded-md bg-white/[0.05] p-sm"><p className="font-bold text-white">{stats.active}</p><p className="text-body-sm text-white/45">Active</p></div>
+              <div className="rounded-md bg-white/[0.05] p-sm"><p className="font-bold text-white">{stats.review}</p><p className="text-body-sm text-white/45">Review</p></div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-lg grid grid-cols-3 gap-md">
+          {[
+            [stats.done, "Completed"],
+            [stats.review, "In Review"],
+            [stats.pending, "Pending"]
+          ].map(([value, label]) => (
+            <div className="rounded-lg border border-white/10 bg-white/[0.055] p-md text-center" key={label}>
+              <p className="text-h3 font-h3 text-white">{value}</p>
+              <p className="mt-1 text-body-sm text-white/45">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LoginPage({ role }) {
   const { signIn, profile, loading: authLoading } = useAuth();
   const notify = useToast();
@@ -2249,7 +2479,7 @@ function SettingsPage({ role }) {
 
 function AppRouter() {
   const path = usePath();
-  if (path === "/") return <PublicLanding />;
+  if (path === "/") return <PremiumLanding />;
   if (path === "/admin/login") return <LoginPage role="admin" />;
   if (path === "/manager/login") return <LoginPage role="manager" />;
   if (path === "/employee/login" || path === "/student/login") return <LoginPage role="employee" />;
@@ -2281,7 +2511,7 @@ function AppRouter() {
   if (path.startsWith("/employee/tasks/") || path.startsWith("/student/tasks/")) return <Guard role="employee"><TaskDetail id={path.split("/").pop()} studentMode /></Guard>;
   if (path === "/employee/performance" || path === "/student/performance") return <Guard role="employee"><PerformancePage /></Guard>;
   if (path === "/employee/settings" || path === "/student/settings") return <Guard role="employee"><SettingsPage role="employee" /></Guard>;
-  return <PublicLanding />;
+  return <PremiumLanding />;
 }
 
 function App() {
